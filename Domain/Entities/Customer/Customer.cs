@@ -25,5 +25,8 @@ namespace Domain.Entities.Customer
         [Column("total_money", TypeName = "decimal")]
         public decimal? TotalMoney { get; set; }
 
+        [Column("discount",TypeName = "int")]
+        public int Discount { get; set; }
+
     }
 }

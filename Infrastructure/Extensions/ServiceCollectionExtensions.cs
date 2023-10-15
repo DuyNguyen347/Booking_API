@@ -61,6 +61,10 @@ namespace Infrastructure.Extensions
             services.AddViewCustomerReviewHistoryRepository();
             services.AddFeedbackFileUploadRepository();
             services.AddEnumMasterDataRepository();
+            services.AddCategoryRepository();
+            services.AddFilmImageRepository();
+            services.AddFilmRepository();
+            services.AddCategoryFilmRepository();
         }
 
     }

@@ -1,10 +1,14 @@
 ﻿using Application.Interfaces.Booking;
 using Application.Interfaces.BookingDetail;
+using Application.Interfaces.Category;
+using Application.Interfaces.CategoryFilm;
 using Application.Interfaces.Customer;
 using Application.Interfaces.Employee;
 using Application.Interfaces.EnumMasterData;
 using Application.Interfaces.Feedback;
 using Application.Interfaces.FeedbackFileUpload;
+using Application.Interfaces.Film;
+using Application.Interfaces.FilmImage;
 using Application.Interfaces.Reply;
 using Application.Interfaces.Service;
 using Application.Interfaces.ServiceImage;
@@ -14,11 +18,15 @@ using Application.Interfaces.View.ViewCustomerReviewHistory;
 using Application.Interfaces.WorkShift;
 using Infrastructure.Repositories.Booking;
 using Infrastructure.Repositories.BookingDetail;
+using Infrastructure.Repositories.Category;
+using Infrastructure.Repositories.CategoryFilm;
 using Infrastructure.Repositories.Customer;
 using Infrastructure.Repositories.Employee;
 using Infrastructure.Repositories.EnumMasterData;
 using Infrastructure.Repositories.Feedback;
 using Infrastructure.Repositories.FeedbackFileUpload;
+using Infrastructure.Repositories.Film;
+using Infrastructure.Repositories.FilmImage;
 using Infrastructure.Repositories.Reply;
 using Infrastructure.Repositories.Service;
 using Infrastructure.Repositories.ServiceImage;
@@ -52,6 +60,25 @@ namespace Infrastructure.Extensions
         {
             services.AddScoped<IBookingRepository,BookingRepository>();
         }
+        public static void AddCategoryRepository(this IServiceCollection services)
+        {
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+        }
+
+        public static void AddFilmRepository(this IServiceCollection services)
+        {
+            services.AddScoped<IFilmRepository, FilmRepository>();
+        }
+        public static void AddCategoryFilmRepository(this IServiceCollection services)
+        {
+            services.AddScoped<ICategoryFilmRepository, CategoryFilmRepository>();
+        }
+        public static void AddFilmImageRepository(this IServiceCollection services)
+        {
+            services.AddScoped<IFilmImageRepository, FilmImageRepository>();
+        }
+
+
         public static void AddBookingDetailRepository(this IServiceCollection services)
         {
             services.AddScoped<IBookingDetailRepository, BookingDetailRepository>();

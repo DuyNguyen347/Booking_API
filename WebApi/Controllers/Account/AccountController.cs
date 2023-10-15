@@ -58,7 +58,7 @@ namespace WebApi.Controllers.Account
         [AllowAnonymous]
         public async Task<IActionResult> ResetPasswordAsync(ResetPasswordRequest request)
         {
-            var result = await _userService.ResetPasswordAsync(request);
+            var result = await _userService.ResetPasswordAsync(request);    
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
     }

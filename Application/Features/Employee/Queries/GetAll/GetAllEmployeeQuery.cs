@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Employee;
+using Application.Parameters;
 using Domain.Helpers;
 using Domain.Wrappers;
 using MediatR;
@@ -7,8 +8,10 @@ using System.Linq.Dynamic.Core;
 
 namespace Application.Features.Employee.Queries.GetAll
 {
-    public class GetAllEmployeeQuery : GetAllEmployeeParameter, IRequest<PaginatedResult<GetAllEmployeeResponse>>
+    public class GetAllEmployeeQuery : RequestParameter, IRequest<PaginatedResult<GetAllEmployeeResponse>>
     {
+        public long? WorkShiftId { get; set; }
+        public bool? Gender { get; set; }
     }
 
     internal class GetAllEmployeeHandler : IRequestHandler<GetAllEmployeeQuery, PaginatedResult<GetAllEmployeeResponse>>

@@ -29,10 +29,10 @@ namespace WebApi.Extensions
                 {
                     Version = "v1",
                     Title = "Source.API.Core",
-                    Description = "API NinePlus Booking Spa",
+                    Description = "API Management Cinema",
                     Contact = new OpenApiContact
                     {
-                        Name = "Nine Plus Booking Spa",
+                        Name = "Management Cinama",
                     }
                 });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
