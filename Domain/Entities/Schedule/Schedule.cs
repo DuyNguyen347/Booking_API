@@ -12,11 +12,9 @@ namespace Domain.Entities.Schedule
 {
     public class Schedule : AuditableBaseEntity<long>
     {
-
         [Required]
-        [Column("duration", TypeName = "int")]
+        [Column("duration", TypeName ="int")]
         public int Duration { get; set; }
-
         [Required]
         [Column("description", TypeName = "nvarchar(MAX)")]
         public string? Description { get; set; }
@@ -26,8 +24,8 @@ namespace Domain.Entities.Schedule
         public DateTime StartTime { get; set; }
 
         [Required]
-        [Column("cinema_film_id", TypeName = "bigint")]
-        public long CinemaFilmId { get; set; }
+        [Column("film_id", TypeName ="bigint")]
+        public long FilmId { get; set; }
 
         [Required]
         [Column("room_id", TypeName = "bigint")]

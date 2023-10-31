@@ -65,6 +65,7 @@ namespace Infrastructure.Extensions
             services.AddFilmImageRepository();
             services.AddFilmRepository();
             services.AddCategoryFilmRepository();
+            services.AddScheduleRepository();
             services.AddCinemaRepository();
             services.AddRoomRepository();
         }

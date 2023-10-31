@@ -21,7 +21,6 @@ using Domain.Entities.EnumMasterData;
 using Domain.Entities.Category;
 using Domain.Entities.CategoryFilm;
 using Domain.Entities.Cinema;
-using Domain.Entities.CinemaFilm;
 using Domain.Entities.FilmImage;
 using Domain.Entities.Films;
 using Domain.Entities.Position;
@@ -50,7 +49,6 @@ namespace Infrastructure.Contexts
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<CategoryFilm> CategoryFilms { get; set; }
         public virtual DbSet<Cinema> Cinemas { get; set; }
-        public virtual DbSet<CinemaFilm> CinemaFilms { get; set; }
         public virtual DbSet<FilmImage> FilmImages { get; set; }
         public virtual DbSet<Film> Films { get; set; }
         public virtual DbSet<Position> Positions { get; set; }

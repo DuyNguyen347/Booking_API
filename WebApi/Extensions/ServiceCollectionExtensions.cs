@@ -113,7 +113,7 @@ namespace WebApi.Extensions
                 options.AddPolicy("CorsPolicy",
                     builder => builder
                         .SetIsOriginAllowedToAllowWildcardSubdomains()
-                        .WithOrigins("http://localhost:4200")
+                        .WithOrigins("*")
                         .AllowAnyMethod()
                         .DisallowCredentials()
                         .AllowAnyHeader()

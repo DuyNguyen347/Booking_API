@@ -26,7 +26,8 @@
 
         public static PaginatedResult<T> Success(List<T> data, int count, int page, int pageSize)
         {
-            return new PaginatedResult<T>(true, data, null, count, page, pageSize);
+            var paginatedData = data.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            return new PaginatedResult<T>(true, paginatedData, null, count, page, pageSize);
         }
 
         public int CurrentPage { get; set; }
