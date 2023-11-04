@@ -2,6 +2,7 @@
 using Application.Interfaces.BookingDetail;
 using Application.Interfaces.Category;
 using Application.Interfaces.CategoryFilm;
+using Application.Interfaces.Cinema;
 using Application.Interfaces.Customer;
 using Application.Interfaces.Employee;
 using Application.Interfaces.EnumMasterData;
@@ -10,6 +11,7 @@ using Application.Interfaces.FeedbackFileUpload;
 using Application.Interfaces.Film;
 using Application.Interfaces.FilmImage;
 using Application.Interfaces.Reply;
+using Application.Interfaces.Room;
 using Application.Interfaces.Service;
 using Application.Interfaces.ServiceImage;
 using Application.Interfaces.View.ViewCustomerBookingHistory;
@@ -20,6 +22,7 @@ using Infrastructure.Repositories.Booking;
 using Infrastructure.Repositories.BookingDetail;
 using Infrastructure.Repositories.Category;
 using Infrastructure.Repositories.CategoryFilm;
+using Infrastructure.Repositories.Cinema;
 using Infrastructure.Repositories.Customer;
 using Infrastructure.Repositories.Employee;
 using Infrastructure.Repositories.EnumMasterData;
@@ -28,6 +31,7 @@ using Infrastructure.Repositories.FeedbackFileUpload;
 using Infrastructure.Repositories.Film;
 using Infrastructure.Repositories.FilmImage;
 using Infrastructure.Repositories.Reply;
+using Infrastructure.Repositories.Room;
 using Infrastructure.Repositories.Service;
 using Infrastructure.Repositories.ServiceImage;
 using Infrastructure.Repositories.View.ViewCustomerBookingHistory;
@@ -63,6 +67,16 @@ namespace Infrastructure.Extensions
         public static void AddCategoryRepository(this IServiceCollection services)
         {
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+        }
+
+        public static void AddCinemaRepository(this IServiceCollection services)
+        {
+            services.AddScoped<ICinemaRepository, CinemaRepository>();
+        }
+
+        public static void AddRoomRepository(this IServiceCollection services)
+        {
+            services.AddScoped<IRoomRepository, RoomRepository>();
         }
 
         public static void AddFilmRepository(this IServiceCollection services)

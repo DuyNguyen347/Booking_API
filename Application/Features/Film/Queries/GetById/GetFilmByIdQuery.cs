@@ -52,11 +52,12 @@ namespace Application.Features.Film.Queries.GetById
                 EndDate = x.EndDate,
                 //Category = GetCategory(x.Id),
                 CreatedOn = x.CreatedOn,
-                Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == x.Id).Select(y => y.NameFile).FirstOrDefault())
+                //Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == x.Id).Select(y => y.NameFile).FirstOrDefault())
             }).FirstOrDefault();
             
             if (film == null) return await Result<GetFilmByIdReponse>.FailAsync(StaticVariable.NOT_FOUND_MSG);
             film.Category = GetCategory(film.Id);
+            film.Image = GetListUrlImage(film.Id);
             return await Result<GetFilmByIdReponse>.SuccessAsync(film);
         }
 
@@ -76,6 +77,17 @@ namespace Application.Features.Film.Queries.GetById
                 .Where(x => x.FilmId == id)
                 .Select(result => result.Name).ToList();
             return string.Join(", ", query);
+        }
+
+        public List<string> GetListUrlImage(long idFilm)
+        {
+            var listUrl = _filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == idFilm).Select(y => y.NameFile).ToList();
+            List<string> listFullUrl = new List<string>();
+            foreach(string? i in listUrl)
+            {
+                listFullUrl.Add(_uploadService.GetFullUrl(i));
+            }
+            return listFullUrl;
         }
     }
 }

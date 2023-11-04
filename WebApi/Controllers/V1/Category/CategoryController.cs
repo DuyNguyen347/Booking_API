@@ -42,7 +42,7 @@ namespace WebApi.Controllers.V1.Category
         /// <param name="parameter"></param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<PaginatedResult<GetAllCategoryResponse>>> GetAllCustomer([FromQuery] GetAllCategoryQuery query)
+        public async Task<ActionResult<PaginatedResult<GetAllCategoryResponse>>> GetAllCategory([FromQuery] GetAllCategoryQuery query)
         {
             return Ok(await Mediator.Send(new GetAllCategoryQuery()
             {
