@@ -9,7 +9,7 @@ namespace Application.Features.Film.Queries.GetAll
         public long Id { get; set; }
         public string? Name { get; set; }
         public string? Actor { get ; set; }
-        public string? Direct { get; set; }
+        public string? Director { get; set; }
         public int Duration { get; set; }
         public string? Description { get; set; }
         public int Year { get; set; }
