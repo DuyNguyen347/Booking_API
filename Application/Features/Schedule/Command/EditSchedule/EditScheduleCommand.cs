@@ -33,6 +33,7 @@ namespace Application.Features.Schedule.Command.EditSchedule
             IMapper mapper, 
             IScheduleRepository scheduleRepository,
             IFilmRepository filmRepository,
+            ICinemaRepository cinemaRepository,
             IRoomRepository roomRepository,
             IUnitOfWork<long> unitOfWork)
         {
@@ -77,8 +78,8 @@ namespace Application.Features.Schedule.Command.EditSchedule
         public async Task<List<ScheduleCommandResponse>> IsScheduleConflict(EditScheduleCommand request)
         {
             var listConflictSchedule = _scheduleRepository.Entities.AsEnumerable().Where(x => request.Id != x.Id && request.RoomId == x.RoomId && !x.IsDeleted).
-                Where(x => (x.StartTime < request.StartTime && request.StartTime <= x.StartTime.AddMinutes(x.Duration)) ||
-                (request.StartTime < x.StartTime && x.StartTime < request.StartTime.AddMinutes(request.Duration))).
+                Where(x => (x.StartTime <= request.StartTime && request.StartTime < x.StartTime.AddMinutes(x.Duration)) ||
+                (request.StartTime <= x.StartTime && x.StartTime < request.StartTime.AddMinutes(request.Duration))).
                 AsQueryable().
                 Select(x => new ScheduleCommandResponse
                 {
