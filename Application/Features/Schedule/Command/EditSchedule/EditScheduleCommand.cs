@@ -33,6 +33,7 @@ namespace Application.Features.Schedule.Command.EditSchedule
             IMapper mapper, 
             IScheduleRepository scheduleRepository,
             IFilmRepository filmRepository,
+            ICinemaRepository cinemaRepository,
             IRoomRepository roomRepository,
             IUnitOfWork<long> unitOfWork)
         {
