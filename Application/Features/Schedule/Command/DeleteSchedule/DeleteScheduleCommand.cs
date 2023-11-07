@@ -30,7 +30,7 @@ namespace Application.Features.Schedule.Command.DeleteSchedule
         }
         public async Task<Result<long>> Handle(DeleteScheduleCommand request, CancellationToken cancellationToken)
         {
-            var deleteSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.Id);
+            var deleteSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.Id && !x.IsDeleted);
             if (deleteSchedule == null) return await Result<long>.FailAsync(StaticVariable.NOT_FOUND_MSG);
             await _scheduleRepository.DeleteAsync(deleteSchedule);
             await _unitOfWork.Commit(cancellationToken);

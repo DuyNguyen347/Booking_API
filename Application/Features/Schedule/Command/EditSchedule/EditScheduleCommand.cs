@@ -1,35 +1,38 @@
-﻿using Application.Interfaces.Cinema;
+﻿using Application.Features.Room.Command.EditRoom;
+using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
 using AutoMapper;
+using Domain.Constants;
 using Domain.Wrappers;
 using MediatR;
 
 
-namespace Application.Features.Schedule.Command.AddSchedule
+namespace Application.Features.Schedule.Command.EditSchedule
 {
-    public class AddScheduleCommand : IRequest<ScheduleResult<ScheduleCommandResponse>>
+    public class EditScheduleCommand : IRequest<ScheduleResult<ScheduleCommandResponse>>
     {
         public long Id { get; set; }
         public int Duration { get; set; }
-        public string Description { get; set; } = default!;
+        public string? Description { get; set; }
         public DateTime StartTime { get; set; }
         public long FilmId { get; set; }
-        public long RoomId {  get; set; }
+        public long RoomId { get; set; }
         public int Price { get; set; }
     }
-    internal class AddScheduleCommandHandler : IRequestHandler<AddScheduleCommand, ScheduleResult<ScheduleCommandResponse>>
+    internal class EditScheduleCommandHandler : IRequestHandler<EditScheduleCommand, ScheduleResult<ScheduleCommandResponse>>
     {
         private readonly IMapper _mapper;
         private readonly IScheduleRepository _scheduleRepository;
         private readonly IFilmRepository _filmRepository;
         private readonly IRoomRepository _roomRepository;
         private readonly IUnitOfWork<long> _unitOfWork;
-        public AddScheduleCommandHandler(IMapper mapper, IScheduleRepository scheduleRepository,
+        public EditScheduleCommandHandler(
+            IMapper mapper, 
+            IScheduleRepository scheduleRepository,
             IFilmRepository filmRepository,
-            ICinemaRepository cinemaRepository,
             IRoomRepository roomRepository,
             IUnitOfWork<long> unitOfWork)
         {
@@ -39,7 +42,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
             _roomRepository = roomRepository;
             _unitOfWork = unitOfWork;
         }
-        public async Task<ScheduleResult<ScheduleCommandResponse>> Handle(AddScheduleCommand request, CancellationToken cancellationToken)
+        public async Task<ScheduleResult<ScheduleCommandResponse>> Handle(EditScheduleCommand request, CancellationToken cancellationToken)
         {
             var existFilm = await _filmRepository.FindAsync(x => x.Id == request.FilmId && !x.IsDeleted);
             var existRoom = await _roomRepository.FindAsync(x => x.Id == request.RoomId && !x.IsDeleted);
@@ -49,10 +52,12 @@ namespace Application.Features.Schedule.Command.AddSchedule
             List<ScheduleCommandResponse> listConflictSchedule = await IsScheduleConflict(request);
             if (listConflictSchedule.Count == 0)
             {
-                var addSchedule = _mapper.Map<Domain.Entities.Schedule.Schedule>(request);
-                await _scheduleRepository.AddAsync(addSchedule);
+                var editSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.Id && !x.IsDeleted);
+                if (editSchedule == null) return await ScheduleResult<ScheduleCommandResponse>.FailAsync(StaticVariable.NOT_FOUND_MSG);
+                _mapper.Map(request, editSchedule);
+                await _scheduleRepository.UpdateAsync(editSchedule);
                 await _unitOfWork.Commit(cancellationToken);
-                request.Id = addSchedule.Id;
+                request.Id = editSchedule.Id;
                 return await ScheduleResult<ScheduleCommandResponse>.SuccessAsync(new List<ScheduleCommandResponse>
                 {
                     new ScheduleCommandResponse
@@ -69,11 +74,11 @@ namespace Application.Features.Schedule.Command.AddSchedule
             }
             return await ScheduleResult<ScheduleCommandResponse>.FailAsync(listConflictSchedule, "CONFLICT_WITH_EXISTING_SCHEDULE");
         }
-        public async Task<List<ScheduleCommandResponse>> IsScheduleConflict(AddScheduleCommand request)
+        public async Task<List<ScheduleCommandResponse>> IsScheduleConflict(EditScheduleCommand request)
         {
-            var listConflictSchedule = _scheduleRepository.Entities.AsEnumerable().Where(x => request.RoomId == x.RoomId && !x.IsDeleted).
-                Where(x => (x.StartTime <= request.StartTime && request.StartTime < x.StartTime.AddMinutes(x.Duration)) ||
-                (request.StartTime <= x.StartTime && x.StartTime < request.StartTime.AddMinutes(request.Duration))).
+            var listConflictSchedule = _scheduleRepository.Entities.AsEnumerable().Where(x => request.Id != x.Id && request.RoomId == x.RoomId && !x.IsDeleted).
+                Where(x => (x.StartTime < request.StartTime && request.StartTime <= x.StartTime.AddMinutes(x.Duration)) ||
+                (request.StartTime < x.StartTime && x.StartTime < request.StartTime.AddMinutes(request.Duration))).
                 AsQueryable().
                 Select(x => new ScheduleCommandResponse
                 {
