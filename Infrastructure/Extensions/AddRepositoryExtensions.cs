@@ -11,6 +11,7 @@ using Application.Interfaces.FeedbackFileUpload;
 using Application.Interfaces.Film;
 using Application.Interfaces.FilmImage;
 using Application.Interfaces.Reply;
+using Application.Interfaces.Schedule;
 using Application.Interfaces.Room;
 using Application.Interfaces.Service;
 using Application.Interfaces.ServiceImage;
@@ -31,6 +32,7 @@ using Infrastructure.Repositories.FeedbackFileUpload;
 using Infrastructure.Repositories.Film;
 using Infrastructure.Repositories.FilmImage;
 using Infrastructure.Repositories.Reply;
+using Infrastructure.Repositories.Schedule;
 using Infrastructure.Repositories.Room;
 using Infrastructure.Repositories.Service;
 using Infrastructure.Repositories.ServiceImage;
@@ -128,6 +130,10 @@ namespace Infrastructure.Extensions
         public static void AddEnumMasterDataRepository(this IServiceCollection services)
         {
             services.AddScoped<IEnumMasterDataRepository, EnumMasterDataRepository>();
+        }
+        public static void AddScheduleRepository (this IServiceCollection services)
+        {
+            services.AddScoped<IScheduleRepository, ScheduleRepository>();
         }
     }
 }
