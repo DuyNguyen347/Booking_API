@@ -19,27 +19,27 @@ namespace WebApi.Controllers.V1.Schedule
     public class ScheduleController: BaseApiController<ScheduleController>
     {
         [HttpGet("film/{id}")]
-        public async Task<ActionResult<Result<Dictionary<string, Dictionary<string, List<GetAllScheduleByFilmResponse>>>>>> GetAllScheduleByFilm(long Id)
+        public async Task<ActionResult<Result<Dictionary<string, Dictionary<string, List<GetAllScheduleByFilmResponse>>>>>> GetAllScheduleByFilm(long id)
         {
             return Ok(await Mediator.Send(new GetAllScheduleByFilmQuery()
             {
-                FilmId = Id
+                FilmId = id
             }));
         }
         [HttpGet("cinema/{id}")]
-        public async Task<ActionResult<ScheduleResult<GetAllScheduleByCinemaResponse>>> GetAllScheduleByCinema(long Id)
+        public async Task<ActionResult<ScheduleResult<GetAllScheduleByCinemaResponse>>> GetAllScheduleByCinema(long id)
         {
             return Ok(await Mediator.Send(new GetAllScheduleByCinemaQuery()
             {
-                CinemaId = Id
+                CinemaId = id
             }));
         }
         [HttpGet("{id}")]
-        public async Task<ActionResult<Result<GetScheduleByIdResponse>>> GetScheduleById(long Id)
+        public async Task<ActionResult<Result<GetScheduleByIdResponse>>> GetScheduleById(long id)
         {
             return Ok(await Mediator.Send(new GetScheduleByIdQuery()
             {
-                Id = Id
+                Id = id
             }));
         }
         [HttpPost]
