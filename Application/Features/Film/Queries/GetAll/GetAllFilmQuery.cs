@@ -59,6 +59,7 @@ namespace Application.Features.Film.Queries.GetAll
                             CreatedOn = x.CreatedOn,
                             LastModifiedOn = x.LastModifiedOn,
                             Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == x.Id).Select(y => y.NameFile).FirstOrDefault()),
+                            Poster = _uploadService.GetFullUrl(x.Poster),
                             Category = GetCategory(x.Id)
                         });
             var data = query.OrderBy(request.OrderBy);

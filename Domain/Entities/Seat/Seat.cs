@@ -18,10 +18,11 @@ namespace Domain.Entities.Seat
         [Column("room_id", TypeName = "bigint")]
         public long RoomId { get; set; }
 
-
-        [Required]
         [Column("number", TypeName = "int")]
         public int NumberSeat { get; set; }
+
+        [Column("seatcode", TypeName = "varchar(10)")]
+        public string? SeatCode { get; set; }
 
         [Required]
         [Column("status", TypeName = "int")]
