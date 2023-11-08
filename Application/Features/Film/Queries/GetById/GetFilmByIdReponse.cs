@@ -23,6 +23,7 @@ namespace Application.Features.Film.Queries.GetById
         public DateTime EndDate { get; set; }
         public string? Category { get; set; }
         public List<string>? Image { get; set; }
+        public string? Poster { get; set; }
         public DateTime CreatedOn { get; set; }
     }
 }

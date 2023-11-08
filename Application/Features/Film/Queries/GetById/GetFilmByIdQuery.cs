@@ -52,6 +52,7 @@ namespace Application.Features.Film.Queries.GetById
                 EndDate = x.EndDate,
                 //Category = GetCategory(x.Id),
                 CreatedOn = x.CreatedOn,
+                Poster = _uploadService.GetFullUrl(x.Poster),
                 //Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == x.Id).Select(y => y.NameFile).FirstOrDefault())
             }).FirstOrDefault();
             
