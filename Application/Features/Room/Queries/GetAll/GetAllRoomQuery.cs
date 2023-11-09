@@ -36,7 +36,8 @@ namespace Application.Features.Room.Queries.GetAll
                             Id = x.Id,
                             Name = x.Name,
                             NumberSeat =x.NumberSeat,
-                            Status = x.Status,    
+                            Status = x.Status,
+                            CinemaId = x.CinemaId,
                             CreatedOn = x.CreatedOn,
                             LastModifiedOn = x.LastModifiedOn
                         });
