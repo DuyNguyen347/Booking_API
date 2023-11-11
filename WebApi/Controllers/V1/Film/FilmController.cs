@@ -2,6 +2,7 @@
 using Application.Features.Category.Queries.GetAll;
 using Application.Features.Film.Command.AddFilm;
 using Application.Features.Film.Command.DeleteFilm;
+using Application.Features.Film.Command.EditFilm;
 using Application.Features.Film.Queries.GetAll;
 using Application.Features.Film.Queries.GetById;
 using Domain.Constants;
@@ -68,12 +69,12 @@ namespace WebApi.Controllers.V1.Film
         /// <param name="command"></param>
         /// <returns></returns>
         //[Authorize]
-        //[HttpPut]
-        //public async Task<IActionResult> EditCustomer(EditCustomerCommand command)
-        //{
-        //    var result = await Mediator.Send(command);
-        //    return (result.Succeeded) ? Ok(result) : BadRequest(result);
-        //}
+        [HttpPut]
+        public async Task<IActionResult> EditFilm(EditFilmCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        }
 
         /// <summary>
         /// Delete customer

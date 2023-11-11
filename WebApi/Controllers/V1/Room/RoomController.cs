@@ -2,6 +2,7 @@
 using Application.Features.Room.Command.DeleteRoom;
 using Application.Features.Room.Command.EditRoom;
 using Application.Features.Room.Queries.GetAll;
+using Application.Features.Room.Queries.GetById;
 using Domain.Wrappers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,14 +20,14 @@ namespace WebApi.Controllers.V1.Room
         /// <param name="id"></param>
         /// <returns></returns>
         //[Authorize]
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<Result<GetRoomByIdResponse>>> GetRoomById(long id)
-        //{
-        //    return Ok(await Mediator.Send(new GetRoomByIdQuery()
-        //    {
-        //        Id = id
-        //    }));
-        //}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Result<GetRoomByIdResponse>>> GetRoomById(long id)
+        {
+            return Ok(await Mediator.Send(new GetRoomByIdQuery()
+            {
+                Id = id
+            }));
+        }
 
         /// <summary>
         /// Add/Edit customer
