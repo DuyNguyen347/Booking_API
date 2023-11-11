@@ -1,4 +1,5 @@
 ﻿using Application.Features.Film.Command.AddFilm;
+using Application.Features.Film.Command.EditFilm;
 using AutoMapper;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace Application.Mappings.Film
         public FilmMappings()
         {
             CreateMap<Domain.Entities.Films.Film, AddFilmCommand>().ReverseMap();
+            CreateMap<Domain.Entities.Films.Film, EditFilmCommand>().ReverseMap();
         }
     }
 }

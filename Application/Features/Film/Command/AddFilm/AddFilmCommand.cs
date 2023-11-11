@@ -17,6 +17,7 @@ using Domain.Wrappers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Asn1.Crmf;
+using Org.BouncyCastle.Bcpg;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +44,7 @@ namespace Application.Features.Film.Command.AddFilm
         public DateTime EndDate { get ; set; }
         public List<long> ListIdCategory { get; set; }
         public List<ImageRequest> FileImages { get; set; }
+        public string? Poster { get; set; }
 
     }
 

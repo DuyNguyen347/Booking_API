@@ -41,6 +41,8 @@ using Infrastructure.Repositories.View.ViewCustomerFeedbackReply;
 using Infrastructure.Repositories.View.ViewCustomerReviewHistory;
 using Infrastructure.Repositories.WorkShift;
 using Microsoft.Extensions.DependencyInjection;
+using Infrastructure.Repositories.Seat;
+using Application.Interfaces.Seat;
 
 namespace Infrastructure.Extensions
 {
@@ -94,6 +96,10 @@ namespace Infrastructure.Extensions
             services.AddScoped<IFilmImageRepository, FilmImageRepository>();
         }
 
+        public static void AddSeatRepository(this IServiceCollection services)
+        {
+            services.AddScoped<ISeatRepository, SeatRepository>();
+        }
 
         public static void AddBookingDetailRepository(this IServiceCollection services)
         {

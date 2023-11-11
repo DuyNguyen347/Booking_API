@@ -22,5 +22,6 @@ namespace Application.Features.Film.Queries.GetAll
         public string? Image { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? LastModifiedOn { get; set; }
+        public string? Poster { get; set; }
     }
 }

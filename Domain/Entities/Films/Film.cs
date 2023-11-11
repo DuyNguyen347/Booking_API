@@ -58,5 +58,9 @@ namespace Domain.Entities.Films
         [Column("enable", TypeName = "bit")]
         public bool Enable { get; set; }
 
+        [Required]
+        [Column("poster", TypeName = "varchar(200)")]
+        public string? Poster { get; set; }
+
     }
 }
