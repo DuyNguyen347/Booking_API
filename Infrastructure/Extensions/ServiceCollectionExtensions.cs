@@ -68,6 +68,7 @@ namespace Infrastructure.Extensions
             services.AddScheduleRepository();
             services.AddCinemaRepository();
             services.AddRoomRepository();
+            services.AddSeatRepository();
         }
 
     }

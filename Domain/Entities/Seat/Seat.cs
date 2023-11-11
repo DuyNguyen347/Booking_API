@@ -26,7 +26,7 @@ namespace Domain.Entities.Seat
 
         [Required]
         [Column("status", TypeName = "int")]
-        public RoomStatus Status { get; set; }
+        public SeatStatus Status { get; set; }
 
     }
 }

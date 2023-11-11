@@ -14,7 +14,6 @@ namespace Application.Features.Room.Queries.GetAll
         public int NumberSeat { get; set; }
         public SeatStatus Status { get; set; }
         public long CinemaId { get; set; }
-
         public DateTime CreatedOn { get; set; }
         public DateTime? LastModifiedOn { get; set; }
     }
