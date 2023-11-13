@@ -10,7 +10,7 @@ using MediatR;
 
 namespace Application.Features.Schedule.Command.AddSchedule
 {
-    public class AddScheduleCommand : IRequest<ScheduleResult<ScheduleCommandResponse>>
+    public class AddScheduleCommand : IRequest<Result<List<ScheduleCommandResponse>>>
     {
         public long Id { get; set; }
         public int Duration { get; set; }
@@ -20,7 +20,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
         public long RoomId {  get; set; }
         public int Price { get; set; }
     }
-    internal class AddScheduleCommandHandler : IRequestHandler<AddScheduleCommand, ScheduleResult<ScheduleCommandResponse>>
+    internal class AddScheduleCommandHandler : IRequestHandler<AddScheduleCommand, Result<List<ScheduleCommandResponse>>>
     {
         private readonly IMapper _mapper;
         private readonly IScheduleRepository _scheduleRepository;
@@ -39,13 +39,13 @@ namespace Application.Features.Schedule.Command.AddSchedule
             _roomRepository = roomRepository;
             _unitOfWork = unitOfWork;
         }
-        public async Task<ScheduleResult<ScheduleCommandResponse>> Handle(AddScheduleCommand request, CancellationToken cancellationToken)
+        public async Task<Result<List<ScheduleCommandResponse>>> Handle(AddScheduleCommand request, CancellationToken cancellationToken)
         {
             var existFilm = await _filmRepository.FindAsync(x => x.Id == request.FilmId && !x.IsDeleted);
             var existRoom = await _roomRepository.FindAsync(x => x.Id == request.RoomId && !x.IsDeleted);
-            if (existFilm == null) return await ScheduleResult<ScheduleCommandResponse>.FailAsync("NOT_FOUND_FILM");
-            if (existRoom == null) return await ScheduleResult<ScheduleCommandResponse>.FailAsync("NOT_FOUND_ROOM");
-            if (request.Duration < existFilm.Duration) return await ScheduleResult<ScheduleCommandResponse>.FailAsync($"Duration shorter than film's duration ({existFilm.Duration})");
+            if (existFilm == null) return await Result<List<ScheduleCommandResponse>>.FailAsync("NOT_FOUND_FILM");
+            if (existRoom == null) return await Result<List<ScheduleCommandResponse>>.FailAsync("NOT_FOUND_ROOM");
+            if (request.Duration < existFilm.Duration) return await Result<List<ScheduleCommandResponse>>.FailAsync($"Duration shorter than film's duration ({existFilm.Duration})");
             List<ScheduleCommandResponse> listConflictSchedule = await IsScheduleConflict(request);
             if (listConflictSchedule.Count == 0)
             {
@@ -53,7 +53,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
                 await _scheduleRepository.AddAsync(addSchedule);
                 await _unitOfWork.Commit(cancellationToken);
                 request.Id = addSchedule.Id;
-                return await ScheduleResult<ScheduleCommandResponse>.SuccessAsync(new List<ScheduleCommandResponse>
+                return await Result<List<ScheduleCommandResponse>>.SuccessAsync(new List<ScheduleCommandResponse>
                 {
                     new ScheduleCommandResponse
                     {
@@ -67,7 +67,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
                     }
                 });
             }
-            return await ScheduleResult<ScheduleCommandResponse>.FailAsync(listConflictSchedule, "CONFLICT_WITH_EXISTING_SCHEDULE");
+            return await Result<List<ScheduleCommandResponse>>.FailAsync(listConflictSchedule, "CONFLICT_WITH_EXISTING_SCHEDULE");
         }
         public async Task<List<ScheduleCommandResponse>> IsScheduleConflict(AddScheduleCommand request)
         {

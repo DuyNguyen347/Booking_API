@@ -44,9 +44,10 @@ namespace Application.Features.Schedule.Query.GetById
                                        Duration = s.Duration,
                                        Description = s.Description,
                                        StartTime = s.StartTime,
-                                       Film = film.Name,
-                                       Cinema = cinema.Name,
-                                       Room = room.Name,
+                                       EndTime = s.StartTime.AddMinutes(s.Duration),
+                                       FilmId = film.Id,
+                                       CinemaId = cinema.Id,
+                                       RoomId = room.Id,
                                        Price = s.Price                                  
                                    }).FirstOrDefaultAsync(cancellationToken:cancellationToken);
             if (schedule == null) return await Result<GetScheduleByIdResponse>.FailAsync("NOT_FOUND_SCHEDULE");

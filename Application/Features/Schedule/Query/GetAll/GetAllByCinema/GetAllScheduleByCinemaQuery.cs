@@ -13,11 +13,11 @@ using System.Threading.Tasks;
 
 namespace Application.Features.Schedule.Query.GetAll.GetAllByCinema
 {
-    public class GetAllScheduleByCinemaQuery : IRequest<ScheduleResult<GetAllScheduleByCinemaResponse>>
+    public class GetAllScheduleByCinemaQuery : IRequest<Result<List<GetAllScheduleByCinemaResponse>>>
     {
         public long CinemaId { get; set; }
     }
-    internal class GetAllScheduleByCinemaHandler : IRequestHandler<GetAllScheduleByCinemaQuery, ScheduleResult<GetAllScheduleByCinemaResponse>>
+    internal class GetAllScheduleByCinemaHandler : IRequestHandler<GetAllScheduleByCinemaQuery, Result<List<GetAllScheduleByCinemaResponse>>>
     {
         private readonly IScheduleRepository _scheduleRepository;
         private readonly IFilmRepository _filmRepository;
@@ -31,10 +31,10 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllByCinema
             _cinemaRepository = cinemaRepository;
             _roomRepository = roomRepository;
         }
-        public async Task<ScheduleResult<GetAllScheduleByCinemaResponse>> Handle(GetAllScheduleByCinemaQuery request, CancellationToken cancellationToken)
+        public async Task<Result<List<GetAllScheduleByCinemaResponse>>> Handle(GetAllScheduleByCinemaQuery request, CancellationToken cancellationToken)
         {
             var existCinema = await _cinemaRepository.FindAsync(x => x.Id == request.CinemaId && !x.IsDeleted);
-            if (existCinema == null) return await ScheduleResult<GetAllScheduleByCinemaResponse>.FailAsync("NOT_FOUND_CINEMA");
+            if (existCinema == null) return await Result<List<GetAllScheduleByCinemaResponse>>.FailAsync("NOT_FOUND_CINEMA");
             var schedules = await (from schedule in _scheduleRepository.Entities
                                    join room in _roomRepository.Entities on schedule.RoomId equals room.Id
                                    join film in _filmRepository.Entities on schedule.FilmId equals film.Id
@@ -45,12 +45,13 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllByCinema
                                        Duration = schedule.Duration,
                                        Description = schedule.Description,
                                        StartTime = schedule.StartTime,
+                                       EndTime = schedule.StartTime.AddMinutes(schedule.Duration),
                                        Film = film.Name,
                                        Room = room.Name,
                                        Price = schedule.Price,
                                    }).ToListAsync();
             
-            return await ScheduleResult<GetAllScheduleByCinemaResponse>.SuccessAsync(schedules);
+            return await Result<List<GetAllScheduleByCinemaResponse>>.SuccessAsync(schedules);
         }
     }
 }

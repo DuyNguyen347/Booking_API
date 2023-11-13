@@ -12,9 +12,10 @@ namespace Application.Features.Schedule.Query.GetById
         public int Duration { get; set; }
         public string? Description { get; set; }
         public DateTime StartTime {  get; set; }
-        public string? Film { get; set; }
-        public string? Cinema {  get; set; }
-        public string? Room {  get; set; }
+        public DateTime EndTime { get; set; }
+        public long FilmId { get; set; }
+        public long CinemaId {  get; set; }
+        public long RoomId {  get; set; }
         public int Price { get; set; }
 }
 }
