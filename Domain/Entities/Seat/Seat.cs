@@ -24,9 +24,5 @@ namespace Domain.Entities.Seat
         [Column("seatcode", TypeName = "varchar(10)")]
         public string? SeatCode { get; set; }
 
-        [Required]
-        [Column("status", TypeName = "int")]
-        public SeatStatus Status { get; set; }
-
     }
 }

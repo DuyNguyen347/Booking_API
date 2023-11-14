@@ -9,7 +9,7 @@ namespace Application.Mappings.Booking
     {
         public BookingMappings() {
             CreateMap<Domain.Entities.Booking.Booking, GetBookingByIdResponse>().ReverseMap();
-            CreateMap<AddBookingCommand, Domain.Entities.Booking.Booking>().ReverseMap();
+            //CreateMap<AddBookingCommand, Domain.Entities.Booking.Booking>().ReverseMap();
             CreateMap<EditBookingCommand, Domain.Entities.Booking.Booking>()
                 .ForMember(dest => dest.CustomerId, opt => opt.Ignore()).ReverseMap();
         }

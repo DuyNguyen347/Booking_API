@@ -64,7 +64,7 @@ namespace Application.Features.Room.Command.AddRoom
                         {
                             NumberSeat = (i -1) * request.NumberColumn + j,
                             RoomId = addRoom.Id,
-                            Status = SeatStatus.Available,
+                            //Status = SeatStatus.Available,
                             SeatCode = ((char)('A' + i - 1)).ToString() + j.ToString()
                         });
                     }

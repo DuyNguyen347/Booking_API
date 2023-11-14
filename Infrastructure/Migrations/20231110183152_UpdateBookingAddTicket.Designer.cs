@@ -4,6 +4,7 @@ using Infrastructure.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231110183152_UpdateBookingAddTicket")]
+    partial class UpdateBookingAddTicket
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -821,11 +824,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("name");
 
-                    b.Property<string>("Poster")
-                        .IsRequired()
-                        .HasColumnType("varchar(200)")
-                        .HasColumnName("poster");
-
                     b.Property<string>("Producer")
                         .IsRequired()
                         .HasColumnType("nvarchar(200)")
@@ -954,14 +952,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("name");
 
-                    b.Property<int>("NumberColumn")
-                        .HasColumnType("int")
-                        .HasColumnName("number_column");
-
-                    b.Property<int>("NumberRow")
-                        .HasColumnType("int")
-                        .HasColumnName("number_row");
-
                     b.Property<int>("NumberSeat")
                         .HasColumnType("int")
                         .HasColumnName("number_seat");
@@ -1028,50 +1018,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Schedules");
                 });
 
-            modelBuilder.Entity("Domain.Entities.ScheduleSeat.ScheduleSeat", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ReservationTime")
-                        .HasColumnType("datetime")
-                        .HasColumnName("reservation_time");
-
-                    b.Property<long>("ScheduleId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("schedule_id");
-
-                    b.Property<long>("SeatId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("seat_id");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ScheduleSeats");
-                });
-
             modelBuilder.Entity("Domain.Entities.Seat.Seat", b =>
                 {
                     b.Property<long>("Id")
@@ -1103,9 +1049,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("room_id");
 
-                    b.Property<string>("SeatCode")
-                        .HasColumnType("varchar(10)")
-                        .HasColumnName("seatcode");
+                    b.Property<int>("Status")
+                        .HasColumnType("int")
+                        .HasColumnName("status");
 
                     b.HasKey("Id");
 
@@ -1202,6 +1148,10 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<long>("BookingId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("booking_id");
+
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1221,14 +1171,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("price");
 
-                    b.Property<byte[]>("QRCode")
-                        .HasColumnType("varbinary(max)")
-                        .HasColumnName("qr_code");
-
-                    b.Property<long>("ScheduleId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("schedule_id");
-
                     b.Property<long>("SeatId")
                         .HasColumnType("bigint")
                         .HasColumnName("seat_id");
@@ -1236,10 +1178,6 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int")
                         .HasColumnName("type");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 

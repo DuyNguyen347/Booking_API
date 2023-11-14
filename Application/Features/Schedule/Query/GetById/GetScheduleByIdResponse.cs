@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Constants.Enum;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,5 +18,14 @@ namespace Application.Features.Schedule.Query.GetById
         public long CinemaId {  get; set; }
         public long RoomId {  get; set; }
         public int Price { get; set; }
-}
+        public List<GetScheduleByIdSeatResponse>? scheduleSeats { get; set; }
+    }
+    public class GetScheduleByIdSeatResponse
+    {
+        public long Id { get; set; }
+        public long SeatId { get; set; }
+        public int NumberSeat {  get; set; }
+        public string? SeatCode {  get; set; }
+        public SeatStatus Status { get; set; }
+    }
 }

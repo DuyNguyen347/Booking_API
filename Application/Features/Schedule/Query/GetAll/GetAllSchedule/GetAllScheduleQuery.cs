@@ -49,6 +49,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
                          join room in _roomRepository.Entities on cinema.Id equals room.CinemaId
                          join schedule in _scheduleRepository.Entities on room.Id equals schedule.RoomId
                          join film in _filmRepository.Entities on schedule.FilmId equals film.Id
+                         where !cinema.IsDeleted && !room.IsDeleted && !film.IsDeleted && !schedule.IsDeleted
                          select new
                          {
                              schedule = schedule,
