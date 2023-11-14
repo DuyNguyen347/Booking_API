@@ -3,6 +3,8 @@ using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
+using Application.Interfaces.ScheduleSeat;
+using Application.Interfaces.Seat;
 using Domain.Wrappers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -24,12 +26,22 @@ namespace Application.Features.Schedule.Query.GetById
         private readonly IFilmRepository _filmRepository;
         private readonly ICinemaRepository _cinemaRepository;
         private readonly IRoomRepository _roomRepository;
-        public GetScheduleByIdHandler(IScheduleRepository scheduleRepository, IFilmRepository filmRepository, ICinemaRepository cinemaRepository, IRoomRepository roomRepository)
+        private readonly ISeatRepository _seatRepository;
+        private readonly IScheduleSeatRepository _scheduleSeatRepository;
+        public GetScheduleByIdHandler(
+            IScheduleRepository scheduleRepository, 
+            IFilmRepository filmRepository, 
+            ICinemaRepository cinemaRepository, 
+            IRoomRepository roomRepository,
+            ISeatRepository seatRepository,
+            IScheduleSeatRepository scheduleSeatRepository)
         {
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
             _cinemaRepository = cinemaRepository;
             _roomRepository = roomRepository;
+            _seatRepository = seatRepository;
+            _scheduleSeatRepository = scheduleSeatRepository;
         }
         public async Task<Result<GetScheduleByIdResponse>> Handle(GetScheduleByIdQuery request, CancellationToken cancellationToken)
         {
@@ -50,6 +62,17 @@ namespace Application.Features.Schedule.Query.GetById
                                        RoomId = room.Id,
                                        Price = s.Price                                  
                                    }).FirstOrDefaultAsync(cancellationToken:cancellationToken);
+            var seatSchedule = await (from scheduleSeat in _scheduleSeatRepository.Entities
+                                      join seat in _seatRepository.Entities on scheduleSeat.SeatId equals seat.Id
+                                      where !seat.IsDeleted && !scheduleSeat.IsDeleted
+                                      select new GetScheduleByIdSeatResponse
+                                      {
+                                          Id = seat.Id,
+                                          NumberSeat = seat.NumberSeat,
+                                          SeatCode = seat.SeatCode,
+                                          Status = scheduleSeat.Status
+                                      }).ToListAsync();
+            schedule.scheduleSeats = seatSchedule;
             if (schedule == null) return await Result<GetScheduleByIdResponse>.FailAsync("NOT_FOUND_SCHEDULE");
             return await Result<GetScheduleByIdResponse>.SuccessAsync(schedule);
         }

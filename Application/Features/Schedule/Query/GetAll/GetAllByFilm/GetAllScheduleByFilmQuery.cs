@@ -6,6 +6,7 @@ using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
+using Domain.Entities.Films;
 using Domain.Entities.Schedule;
 using Domain.Wrappers;
 using MediatR;
@@ -40,6 +41,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
                                    join room in _roomRepository.Entities on schedule.RoomId equals room.Id
                                    join cinema in _cinemaRepository.Entities on room.CinemaId equals cinema.Id
                                    where schedule.FilmId == request.FilmId
+                                   where !cinema.IsDeleted && !room.IsDeleted && !schedule.IsDeleted
                                    select new
                                    {
                                        schedule = schedule,

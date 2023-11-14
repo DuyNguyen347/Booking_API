@@ -63,7 +63,7 @@ namespace Application.Features.Room.Command.EditRoom
                         {
                             NumberSeat = (i - 1) * request.NumberColumn + j,
                             RoomId = editRoom.Id,
-                            Status = SeatStatus.Available,
+                            //Status = SeatStatus.Available,
                             SeatCode = ((char)('A' + i - 1)).ToString() + j.ToString()
                         });
                     }
