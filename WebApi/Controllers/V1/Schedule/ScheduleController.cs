@@ -7,6 +7,7 @@ using Application.Features.Schedule.Command.DeleteSchedule;
 using Application.Features.Schedule.Command.EditSchedule;
 using Application.Features.Schedule.Query.GetAll.GetAll;
 using Application.Features.Schedule.Query.GetAll.GetAllByCinema;
+using Application.Features.Schedule.Query.GetAll.GetAllSchedule;
 using Application.Features.Schedule.Query.GetById;
 using Domain.Wrappers;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,7 @@ namespace WebApi.Controllers.V1.Schedule
     public class ScheduleController: BaseApiController<ScheduleController>
     {
         [HttpGet("film/{id}")]
-        public async Task<ActionResult<Result<Dictionary<string, Dictionary<string, List<GetAllScheduleByFilmResponse>>>>>> GetAllScheduleByFilm(long id)
+        public async Task<ActionResult<Result<Dictionary<string, Dictionary<long, List<GetAllScheduleByFilmResponse>>>>>> GetAllScheduleByFilm(long id)
         {
             return Ok(await Mediator.Send(new GetAllScheduleByFilmQuery()
             {
@@ -27,12 +28,17 @@ namespace WebApi.Controllers.V1.Schedule
             }));
         }
         [HttpGet("cinema/{id}")]
-        public async Task<ActionResult<ScheduleResult<GetAllScheduleByCinemaResponse>>> GetAllScheduleByCinema(long id)
+        public async Task<ActionResult<Result<List<GetAllScheduleByCinemaResponse>>>> GetAllScheduleByCinema(long id)
         {
             return Ok(await Mediator.Send(new GetAllScheduleByCinemaQuery()
             {
                 CinemaId = id
             }));
+        }
+        [HttpGet]
+        public async Task<ActionResult<Result<Dictionary<long, GetAllScheduleResponse>>>> GetAllSchedule()
+        {
+            return Ok(await Mediator.Send(new GetAllScheduleQuery()));
         }
         [HttpGet("{id}")]
         public async Task<ActionResult<Result<GetScheduleByIdResponse>>> GetScheduleById(long id)

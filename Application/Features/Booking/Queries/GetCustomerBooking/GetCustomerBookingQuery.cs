@@ -67,12 +67,8 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                 {
                     Id = s.Id,
                     CustomerId = s.CustomerId,
-                    BookingDate = s.BookingDate,
-                    FromTime = s.FromTime,
-                    ToTime = s.ToTime,
                     LastModifiedOn = s.LastModifiedOn,
                     Status = s.Status,
-                    Note = s.Note,
                 }).ToListAsync();
             List<GetCustomerBookingResponse> response = new List<GetCustomerBookingResponse>();
             foreach (var booking in bookings)
@@ -80,9 +76,6 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                 var bookingResponse = new GetCustomerBookingResponse
                 {
                     BookingId = booking.Id,
-                    BookingDate = booking.BookingDate,
-                    FromTime = booking.FromTime,
-                    ToTime = booking.ToTime,
                     BookingStatus = booking.Status,
                     LastModifiedOn = booking.LastModifiedOn,
                 };
@@ -129,8 +122,10 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                                 request.KeyWord = request.KeyWord.Trim();
 
                             if (string.IsNullOrEmpty(request.KeyWord) || StringHelper.Contains(service.Name, request.KeyWord)
-                                || booking.Id.ToString().Contains(request.KeyWord) || booking.BookingDate.ToString("dd/MM/yyyy").Contains(request.KeyWord)
-                                || booking.BookingDate.ToString("dd-MM-yyyy").Contains(request.KeyWord))
+                                || booking.Id.ToString().Contains(request.KeyWord) 
+                                //|| booking.BookingDate.ToString("dd/MM/yyyy").Contains(request.KeyWord)
+                                //|| booking.BookingDate.ToString("dd-MM-yyyy").Contains(request.KeyWord)
+                                )
                             {
                                 checkServiceName = true;
                             }

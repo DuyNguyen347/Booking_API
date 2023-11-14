@@ -43,10 +43,10 @@ namespace Application.Features.Seat.Command
 
             List<Domain.Entities.Seat.Seat> listSeats = await _seatRepository.Entities.Where(x => request.ListNumberSeat.Contains(x.NumberSeat) && x.RoomId == request.RoomId).ToListAsync();
 
-            foreach (var seat in listSeats)
-            {
-                seat.Status = request.Status;
-            }
+            //foreach (var seat in listSeats)
+            //{
+            //    seat.Status = request.Status;
+            //}
 
             await _seatRepository.UpdateRangeAsync(listSeats);
             await _unitOfWork.Commit(cancellationToken);

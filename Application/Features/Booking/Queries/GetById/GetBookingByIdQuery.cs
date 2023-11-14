@@ -45,11 +45,7 @@ namespace Application.Features.Booking.Queries.GetById
                 .Select(s => new Domain.Entities.Booking.Booking
                 {
                     Id = s.Id,
-                    BookingDate = s.BookingDate,
                     Status = s.Status,
-                    FromTime = s.FromTime,
-                    ToTime = s.ToTime,
-                    Note = s.Note,  
                     CustomerId = s.CustomerId
                 }).FirstOrDefaultAsync();
             if(Booking == null)

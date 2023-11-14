@@ -10,6 +10,8 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllByCinema
     {
         public long Id { get; set; }
         public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
+        public int Price {  get; set; }
     }
 }
 

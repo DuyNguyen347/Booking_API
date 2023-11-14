@@ -34,18 +34,15 @@ namespace Application.Features.Booking.Queries.GetAll
                                 || StringHelper.Contains(customer.CustomerName, request.Keyword)
                                 || booking.Id.ToString().Contains(request.Keyword)
                                 || customer.PhoneNumber.Contains(request.Keyword))
-                                && (!request.BookingDate.HasValue || booking.BookingDate.Equals(request.BookingDate))
-                                && (!request.FromTime.HasValue || booking.FromTime >= request.FromTime)
-                                && (!request.ToTime.HasValue || booking.ToTime <= request.ToTime)
+                                //&& (!request.BookingDate.HasValue || booking.BookingDate.Equals(request.BookingDate))
+                                //&& (!request.FromTime.HasValue || booking.FromTime >= request.FromTime)
+                                //&& (!request.ToTime.HasValue || booking.ToTime <= request.ToTime)
                                 && (!request.Status.HasValue || booking.Status.Equals(request.Status))
                         select new GetAllBookingResponse
                         {
                             Id = booking.Id,
                             CustomerName = customer.CustomerName,
                             PhoneNumber = customer.PhoneNumber,
-                            BookingDate = booking.BookingDate,
-                            FromTime = booking.FromTime,
-                            ToTime = booking.ToTime,
                             Status = booking.Status,
                             CreatedOn = booking.CreatedOn,
                             LastModifiedOn = booking.LastModifiedOn,
