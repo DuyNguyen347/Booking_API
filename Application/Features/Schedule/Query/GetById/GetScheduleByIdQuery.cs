@@ -67,7 +67,7 @@ namespace Application.Features.Schedule.Query.GetById
                                    }).FirstOrDefaultAsync();
             var seatSchedule = await (from scheduleSeat in _scheduleSeatRepository.Entities
                                       join seat in _seatRepository.Entities on scheduleSeat.SeatId equals seat.Id
-                                      where !seat.IsDeleted && !scheduleSeat.IsDeleted
+                                      where !seat.IsDeleted && !scheduleSeat.IsDeleted && scheduleSeat.ScheduleId == request.Id
                                       select new GetScheduleByIdSeatResponse
                                       {
                                           Id = scheduleSeat.Id,
