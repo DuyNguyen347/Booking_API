@@ -1,4 +1,5 @@
-﻿using Domain.Contracts;
+﻿using Domain.Constants.Enum;
+using Domain.Contracts;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -14,7 +15,7 @@ namespace Domain.Entities.Ticket
     {
         [Required]
         [Column("type", TypeName = "int")]
-        public int Type { get; set; }
+        public TypeTicket Type { get; set; }
 
         [Required]
         [Column("price", TypeName = "int")]
