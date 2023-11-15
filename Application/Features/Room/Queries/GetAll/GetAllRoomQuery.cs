@@ -38,6 +38,8 @@ namespace Application.Features.Room.Queries.GetAll
                             NumberSeat =x.NumberSeat,
                             Status = x.Status,    
                             CinemaId = x.CinemaId,
+                            NumberRow = x.NumberRow,
+                            NumberColumn = x.NumberColumn,
                             CreatedOn = x.CreatedOn,
                             LastModifiedOn = x.LastModifiedOn
                         });

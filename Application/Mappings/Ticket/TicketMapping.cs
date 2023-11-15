@@ -1,15 +1,14 @@
-﻿using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Application.Features.Ticket.Command;
+using AutoMapper;
 
 namespace Application.Mappings.Ticket
 {
     public class TicketMapping : Profile
     {
-        //CreateMap<Domain.Entities.Schedule.Schedule, AddScheduleCommand>().ReverseMap();
+        public TicketMapping()
+        {
+            CreateMap<Domain.Entities.Ticket.Ticket, AddTicketCommand>().ReverseMap();
+        }  
 
     }
 }
