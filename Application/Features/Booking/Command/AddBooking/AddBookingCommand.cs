@@ -84,6 +84,12 @@ namespace Application.Features.Booking.Command.AddBooking
             //        return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
             //}
 
+            foreach (var NumberSeat in request.NumberSeats)
+            {
+                if (!_seatReservationService.ValidateLock(request.CustomerId, request.ScheduleId, NumberSeat))
+                    return await Result<AddBookingCommand>.FailAsync("RESERVATION_TIME_OUT");
+            }
+
             //open transaction
             var transaction = await _unitOfWork.BeginTransactionAsync();
             try

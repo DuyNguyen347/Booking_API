@@ -103,7 +103,7 @@ namespace Infrastructure.Services
             reservation[scheduleId][numberSeat].LockTime = lockTime;
             reservation[scheduleId][numberSeat].LockBy = customerId;
         }
-        private bool ValidateLock(long customerId, long scheduleId, int numberSeat)
+        public bool ValidateLock(long customerId, long scheduleId, int numberSeat)
         {
             return IsSeatLocked(scheduleId, numberSeat) && reservation[scheduleId][numberSeat].LockBy == customerId;
         }
