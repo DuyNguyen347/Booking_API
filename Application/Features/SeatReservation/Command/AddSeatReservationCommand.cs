@@ -2,6 +2,7 @@
 using Application.Interfaces.Customer;
 using Application.Interfaces.Schedule;
 using Application.Interfaces.Services;
+using Domain.Constants;
 using Domain.Wrappers;
 using MediatR;
 using System;
@@ -34,10 +35,13 @@ namespace Application.Features.SeatReservation.Command
         }
         public async Task<Result<AddSeatReservationCommand>> Handle(AddSeatReservationCommand request, CancellationToken cancellationToken)
         {
+            var existCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
+            if (existCustomer == null) return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
+            var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
+            if (existSchedule == null) return await Result<AddSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
             bool IsSuccess = _seatReservationService.LockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
             if (!IsSuccess)
                 return Result<AddSeatReservationCommand>.Fail("SEATS_UNAVAILABLE_TEMPORARILY");
-            Console.WriteLine(_seatReservationService.GetLockedSeats(request.ScheduleId).Count);
             return Result<AddSeatReservationCommand>.Success(request, "RESERVED_SUCCESSFULLY");
         }
     }

@@ -45,7 +45,7 @@ namespace Infrastructure.Extensions
             services.AddScoped<ICheckFileType, CheckFileType>();
             services.AddScoped<ICheckSizeFile, CheckFileSize>();
             services.AddScoped<IEnumService, EnumService>();
-            services.AddScoped<ISeatReservationService, SeatReservationService>();
+            services.AddSingleton<ISeatReservationService, SeatReservationService>();
             services.AddScoped<IVnPayService, VnPayService>();
         }
 

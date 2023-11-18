@@ -1,5 +1,9 @@
-﻿using Application.Features.Booking.Command.AddBooking;
+﻿using Application.Dtos.Responses;
+using Application.Features.Booking.Command.AddBooking;
+using Application.Features.Schedule.Query.GetAll.GetAll;
 using Application.Features.SeatReservation.Command;
+using Application.Features.SeatReservation.Query;
+using Domain.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Controllers.V1.Booking;
@@ -16,6 +20,12 @@ namespace WebApi.Controllers.V1.SeatReservation
         {
             var result = await Mediator.Send(command);
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        }
+        //[Authorize]
+        [HttpGet]
+        public async Task<ActionResult<Result<Dictionary<long, Dictionary<int, AddSeatReservationResponse>>>>> GetAllSeatReservation()
+        {
+            return Ok(await Mediator.Send(new GetAllSeatReservationQuery()));
         }
     }
 }

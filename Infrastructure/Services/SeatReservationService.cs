@@ -1,4 +1,5 @@
 ﻿using Application.Dtos.Requests;
+using Application.Dtos.Responses;
 using Application.Interfaces.Services;
 using Domain.Entities.Seat;
 using System;
@@ -18,6 +19,23 @@ namespace Infrastructure.Services
         {
             reservation = new Dictionary<long, Dictionary<int, SeatLockInfo>>();
             timeOutInSecond = 300;
+        }
+        public Dictionary<long, Dictionary<int, AddSeatReservationResponse>> GetAll()
+        {
+            Dictionary<long, Dictionary<int, AddSeatReservationResponse>> LockSeats = new Dictionary<long, Dictionary<int, AddSeatReservationResponse>>();
+            foreach(var (scheduleId, seat) in reservation)
+            {
+                LockSeats[scheduleId] = new Dictionary<int, AddSeatReservationResponse>();
+                foreach (var (numberSeat, info) in seat)
+                {
+                    LockSeats[scheduleId][numberSeat] = new AddSeatReservationResponse()
+                    {
+                        LockTime = info.LockTime,
+                        LockBy = info.LockBy
+                    };
+                }
+            }
+            return LockSeats;
         }
         public bool LockSeats(long customerId, long scheduleId, List<int> numberSeats)
         {
