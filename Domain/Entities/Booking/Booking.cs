@@ -22,6 +22,5 @@ namespace Domain.Entities.Booking
         [Required]
         [Column("status", TypeName = "int")]
         public int? Status { get; set; }
-
     }
 }

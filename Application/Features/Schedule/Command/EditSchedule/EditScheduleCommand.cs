@@ -1,17 +1,12 @@
 ﻿using Application.Exceptions;
-using Application.Features.Room.Command.EditRoom;
-using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
-using Application.Interfaces.ScheduleSeat;
-using Application.Interfaces.Seat;
 using AutoMapper;
 using Domain.Constants;
 using Domain.Wrappers;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Schedule.Command.EditSchedule
 {
@@ -31,24 +26,18 @@ namespace Application.Features.Schedule.Command.EditSchedule
         private readonly IScheduleRepository _scheduleRepository;
         private readonly IFilmRepository _filmRepository;
         private readonly IRoomRepository _roomRepository;
-        private readonly ISeatRepository _seatRepository;
-        private readonly IScheduleSeatRepository _scheduleSeatRepository;
         private readonly IUnitOfWork<long> _unitOfWork;
         public EditScheduleCommandHandler(
             IMapper mapper,
             IScheduleRepository scheduleRepository,
             IFilmRepository filmRepository,
             IRoomRepository roomRepository,
-            ISeatRepository seatRepository,
-            IScheduleSeatRepository scheduleSeatRepository,
             IUnitOfWork<long> unitOfWork)
         {
             _mapper = mapper;
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
             _roomRepository = roomRepository;
-            _seatRepository = seatRepository;
-            _scheduleSeatRepository = scheduleSeatRepository;
             _unitOfWork = unitOfWork;
         }
         public async Task<Result<List<ScheduleCommandResponse>>> Handle(EditScheduleCommand request, CancellationToken cancellationToken)
@@ -70,27 +59,6 @@ namespace Application.Features.Schedule.Command.EditSchedule
                 var transaction = await _unitOfWork.BeginTransactionAsync();
                 try 
                 {
-                    if (editSchedule.RoomId != request.RoomId)
-                    {
-
-                        var oldScheduleSeats = await _scheduleSeatRepository.Entities.Where(x => x.ScheduleId == editSchedule.Id).ToListAsync();
-                        await _scheduleSeatRepository.DeleteRange(oldScheduleSeats);
-
-                        var scheduleSeatList = await _seatRepository.Entities.Where(x => x.RoomId == request.RoomId && !x.IsDeleted).ToListAsync();
-                        List<Domain.Entities.ScheduleSeat.ScheduleSeat> scheduleSeats = new List<Domain.Entities.ScheduleSeat.ScheduleSeat>();
-                        foreach (var seat in scheduleSeatList)
-                        {
-                            scheduleSeats.Add(new Domain.Entities.ScheduleSeat.ScheduleSeat
-                            {
-                                SeatId = seat.Id,
-                                ScheduleId = request.Id,
-                                Status = Domain.Constants.Enum.SeatStatus.Available
-                            });
-                        }
-                        await _scheduleSeatRepository.AddRangeAsync(scheduleSeats);
-                        await _unitOfWork.Commit(cancellationToken);
-                    }
-
                     _mapper.Map(request, editSchedule);
                     await _scheduleRepository.UpdateAsync(editSchedule);
                     await _unitOfWork.Commit(cancellationToken);

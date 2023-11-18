@@ -1,15 +1,14 @@
-﻿using Application.Features.Ticket.Command;
-using Domain.Wrappers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿//using Domain.Wrappers;
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Mvc;
 
-namespace WebApi.Controllers.V1.Ticket
-{
-    [ApiController]
+//namespace WebApi.Controllers.V1.Ticket
+//{
+//    [ApiController]
 
-    [Route("api/v{version:apiVersion}/Ticket")]
-    public class TicketController : BaseApiController<TicketController>
-    {
+//    [Route("api/v{version:apiVersion}/Ticket")]
+//    public class TicketController : BaseApiController<TicketController>
+//    {
     //    /// <summary>
     //    /// Get Customer detail by Id
     //    /// </summary>
@@ -31,12 +30,12 @@ namespace WebApi.Controllers.V1.Ticket
         /// <param name="command"></param>
         /// <returns></returns>
         //[Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
-        [HttpPost]
-        public async Task<IActionResult> AddTicket(AddTicketCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return (result.Succeeded) ? Ok(result) : BadRequest(result);
-        }
+        //[HttpPost]
+        //public async Task<IActionResult> AddTicket(AddTicketCommand command)
+        //{
+        //    var result = await Mediator.Send(command);
+        //    return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        //}
 
         /// Get all customers pagination, filter
         /// </summary>
@@ -84,6 +83,6 @@ namespace WebApi.Controllers.V1.Ticket
         //    });
         //    return (result.Succeeded) ? Ok(result) : BadRequest(result);
         //}
-    }
-}
+//    }
+//}
 

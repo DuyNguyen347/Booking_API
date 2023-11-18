@@ -2,7 +2,10 @@
 using Application.Interfaces.Booking;
 using Application.Interfaces.BookingDetail;
 using Application.Interfaces.Customer;
+using Application.Interfaces.Room;
+using Application.Interfaces.Schedule;
 using Application.Interfaces.Service;
+using Application.Interfaces.Ticket;
 using AutoMapper;
 using Domain.Constants;
 using Domain.Entities;
@@ -20,48 +23,48 @@ namespace Application.Features.Booking.Queries.GetById
     internal class GetBookingByIdQueryHandler : IRequestHandler<GetBookingByIdQuery, Result<GetBookingByIdResponse>>
     {
         private readonly IBookingRepository _bookingRepository;
-        private readonly IBookingDetailRepository _bookingDetailRepository;
-        private readonly IServiceRepository _serviceRepository;
+        private readonly ITicketRepository _ticketRepository;
+        private readonly IScheduleRepository _scheduleRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IMapper _mapper;
         private readonly ICurrentUserService _currentUserService;
         private readonly UserManager<AppUser> _userManager;
 
-        public GetBookingByIdQueryHandler(IBookingRepository bookingRepository, IBookingDetailRepository bookingDetailRepository,
-            IServiceRepository serviceRepository, IMapper mapper, ICustomerRepository customerRepository, ICurrentUserService currentUserService, UserManager<AppUser> userManager)
+        public GetBookingByIdQueryHandler(
+            IMapper mapper,
+            IBookingRepository bookingRepository, 
+            ITicketRepository ticketRepository,
+            ICustomerRepository customerRepository, 
+            ICurrentUserService currentUserService, 
+            UserManager<AppUser> userManager)
         {
-            _bookingRepository = bookingRepository;
-            _bookingDetailRepository = bookingDetailRepository;
-            _serviceRepository = serviceRepository;
-            _customerRepository = customerRepository;
             _mapper = mapper;
+            _bookingRepository = bookingRepository;
+            _ticketRepository = ticketRepository;
+            _customerRepository = customerRepository;
             _currentUserService = currentUserService;
             _userManager = userManager;
         }
         public async Task<Result<GetBookingByIdResponse>> Handle(GetBookingByIdQuery request, CancellationToken cancellationToken)
         {
             var Booking = await _bookingRepository.Entities
-                .Where(_ => _.Id == request.Id && !_.IsDeleted)
-                .Select(s => new Domain.Entities.Booking.Booking
-                {
-                    Id = s.Id,
-                    Status = s.Status,
-                    CustomerId = s.CustomerId
-                }).FirstOrDefaultAsync();
+                .Where(booking => booking.Id == request.Id && !booking.IsDeleted)
+                .Select(booking => booking).FirstOrDefaultAsync();
             if(Booking == null)
             {
                 return await Result<GetBookingByIdResponse>.FailAsync(StaticVariable.NOT_FOUND_MSG);
             }
 
-            if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
-            {
-                long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
+            //if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
+            //{
+            //    long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
 
-                if (userId != Booking.CustomerId)
-                    return await Result<GetBookingByIdResponse>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
-            }
+            //    if (userId != Booking.CustomerId)
+            //        return await Result<GetBookingByIdResponse>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
+            //}
 
-            var BookingDetailResponse = _mapper.Map<GetBookingByIdResponse>(Booking);
+            var BookingResponse = _mapper.Map<GetBookingByIdResponse>(Booking);
+
             var CustomerBooking = await _customerRepository.Entities
                 .Where(_ => _.Id == Booking.CustomerId)
                 .Select(s => new Domain.Entities.Customer.Customer
@@ -74,38 +77,26 @@ namespace Application.Features.Booking.Queries.GetById
             {
                 return await Result<GetBookingByIdResponse>.FailAsync(StaticVariable.NOT_FOUND_MSG);
             }
-            BookingDetailResponse.CustomerName = CustomerBooking.CustomerName;
-            BookingDetailResponse.PhoneNumber = CustomerBooking.PhoneNumber;
-            var BookingDetails = await _bookingDetailRepository.Entities
+
+            BookingResponse.CustomerName = CustomerBooking.CustomerName;
+            BookingResponse.PhoneNumber = CustomerBooking.PhoneNumber;
+
+            List<TicketBookingResponse> bookingTickets = await _ticketRepository.Entities
                 .Where(_ => _.BookingId == Booking.Id && !_.IsDeleted)
-                .Select(s => new Domain.Entities.BookingDetail.BookingDetail
+                .Select(s => new TicketBookingResponse
                 {
-                    ServiceId = s.ServiceId,
-                    BookingId = s.BookingId,
+                    Id = s.Id,
+                    TypeTicket = s.Type,
+                    Price = s.Price,
+                    NumberSeat = s.NumberSeat,
+                    SeatCode = s.SeatCode
                 }).ToListAsync();
-            foreach(var bookingDetail in BookingDetails)
+            foreach (var ticket in bookingTickets)
             {
-                var Service = await _serviceRepository.Entities
-                    .Where(_ => _.Id == bookingDetail.ServiceId)
-                    .Select(s => new Domain.Entities.Service.Service
-                    {
-                        Id = s.Id,
-                        Name = s.Name,
-                        Price = s.Price,
-                        ServiceTime = s.ServiceTime,
-                    }).FirstOrDefaultAsync();
-                if(Service != null)
-                {
-                    BookingDetailResponse.Services.Add(new ServiceBookingResponse
-                    {
-                        Id = Service.Id,
-                        Name = Service.Name,
-                        Price = Service.Price,
-                        ServiceTime = Service.ServiceTime,
-                    });
-                }
+                BookingResponse.TotalPrice += ticket.Price;
             }
-            return await Result<GetBookingByIdResponse>.SuccessAsync(BookingDetailResponse);
+            BookingResponse.Tickets = bookingTickets;
+            return await Result<GetBookingByIdResponse>.SuccessAsync(BookingResponse);
         }
     }
 }

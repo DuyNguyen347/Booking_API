@@ -43,6 +43,7 @@ namespace Infrastructure.Extensions
             services.AddScoped<ICheckFileType, CheckFileType>();
             services.AddScoped<ICheckSizeFile, CheckFileSize>();
             services.AddScoped<IEnumService, EnumService>();
+            services.AddScoped<ISeatReservationService, SeatReservationService>();
         }
 
         public static void AddRepositories(this IServiceCollection services)
@@ -70,7 +71,6 @@ namespace Infrastructure.Extensions
             services.AddRoomRepository();
             services.AddSeatRepository();
             services.AddTicketRepository();
-            services.AddScheduleSeatRepository();
         }
 
     }
