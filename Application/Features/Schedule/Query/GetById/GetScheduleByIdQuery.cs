@@ -67,6 +67,10 @@ namespace Application.Features.Schedule.Query.GetById
             if (schedule == null) return await Result<GetScheduleByIdResponse>.FailAsync("NOT_FOUND_SCHEDULE");
 
             HashSet<int> lockedSeats = _seatReservationService.GetLockedSeats(request.Id);
+            foreach( var lockedSeat in lockedSeats)
+            {
+                Console.WriteLine(lockedSeat.ToString());
+            }
             List<GetScheduleByIdSeatResponse> scheduleSeats = await _seatRepository.Entities
                 .Where(x => x.RoomId == schedule.RoomId)
                 .Select(x => new GetScheduleByIdSeatResponse
