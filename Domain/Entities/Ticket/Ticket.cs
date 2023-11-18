@@ -14,6 +14,10 @@ namespace Domain.Entities.Ticket
     public class Ticket: AuditableBaseEntity<long>
     {
         [Required]
+        [Column("booking_id", TypeName = "bigint")]
+        public long BookingId { get; set; }
+
+        [Required]
         [Column("type", TypeName = "int")]
         public TypeTicket Type { get; set; }
 
@@ -22,18 +26,12 @@ namespace Domain.Entities.Ticket
         public int Price { get; set; }
 
         [Required]
-        [Column("schedule_id", TypeName = "bigint")]
-        public long ScheduleId { get; set; }
+        [Column("number", TypeName = "int")]
+        public int NumberSeat { get; set; }
 
         [Required]
-        [Column("user_id", TypeName = "bigint")]
-        public long UserId { get; set; }
+        [Column("seatcode", TypeName = "varchar(10)")]
+        public string? SeatCode { get; set; }
 
-        [Required]
-        [Column("seat_id", TypeName = "bigint")]
-        public long SeatId { get; set; }
-
-        [Column("qr_code", TypeName = "varbinary(max)")]
-        public byte[]? QRCode { get; set; }
     }
 }

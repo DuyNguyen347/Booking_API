@@ -1,23 +1,28 @@
-﻿namespace Application.Features.Booking.Queries.GetById
+﻿using Domain.Constants.Enum;
+using System.Security.Cryptography.Pkcs;
+
+namespace Application.Features.Booking.Queries.GetById
 {
     public class GetBookingByIdResponse
     {
         public long Id { get; set; }
-        public string CustomerName { get; set; }
-        public string PhoneNumber { get; set; }
-        public DateTime BookingDate { get; set; }
+        public string? CustomerName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public long ScheduleId { get; set; }
+        public int TotalPrice { get; set; }
+        public byte[]? QRCode { get; set; }
         public int? Status { get; set; }
-        public DateTime FromTime { get; set; }
-        public DateTime ToTime { get; set; }
-        public string? Note { get; set; }
-        public List<ServiceBookingResponse> Services { get; set; } = new List<ServiceBookingResponse>();
+        public List<TicketBookingResponse> Tickets { get; set; } = new List<TicketBookingResponse>();
+        public DateTime CreatedOn { get; set; }
+
     }
 
-    public class ServiceBookingResponse
+    public class TicketBookingResponse
     {
         public long Id { get; set; }
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public int ServiceTime { get; set; }
+        public int NumberSeat {  get; set; }
+        public string? SeatCode {  get; set; }
+        public TypeTicket TypeTicket { get; set; }
+        public int Price { get; set; }
     }
 }

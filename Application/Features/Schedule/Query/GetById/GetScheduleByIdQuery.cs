@@ -1,18 +1,14 @@
-﻿using Application.Features.Schedule.Query.GetAll.GetAllByCinema;
-using Application.Interfaces.Cinema;
+﻿using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
-using Application.Interfaces.ScheduleSeat;
 using Application.Interfaces.Seat;
+using Application.Interfaces.Services;
+using Application.Interfaces.Ticket;
+using Domain.Constants.Enum;
 using Domain.Wrappers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.Schedule.Query.GetById
 {
@@ -27,21 +23,24 @@ namespace Application.Features.Schedule.Query.GetById
         private readonly ICinemaRepository _cinemaRepository;
         private readonly IRoomRepository _roomRepository;
         private readonly ISeatRepository _seatRepository;
-        private readonly IScheduleSeatRepository _scheduleSeatRepository;
+        private readonly ITicketRepository _ticketRepository;
+        private readonly ISeatReservationService _seatReservationService;
         public GetScheduleByIdHandler(
             IScheduleRepository scheduleRepository, 
             IFilmRepository filmRepository, 
             ICinemaRepository cinemaRepository, 
             IRoomRepository roomRepository,
             ISeatRepository seatRepository,
-            IScheduleSeatRepository scheduleSeatRepository)
+            ITicketRepository ticketRepository,
+            ISeatReservationService seatReservationService)
         {
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
             _cinemaRepository = cinemaRepository;
             _roomRepository = roomRepository;
             _seatRepository = seatRepository;
-            _scheduleSeatRepository = scheduleSeatRepository;
+            _ticketRepository = ticketRepository;
+            _seatReservationService = seatReservationService;
         }
         public async Task<Result<GetScheduleByIdResponse>> Handle(GetScheduleByIdQuery request, CancellationToken cancellationToken)
         {
@@ -65,19 +64,19 @@ namespace Application.Features.Schedule.Query.GetById
                                        RoomId = room.Id,
                                        Price = s.Price                                  
                                    }).FirstOrDefaultAsync();
-            var seatSchedule = await (from scheduleSeat in _scheduleSeatRepository.Entities
-                                      join seat in _seatRepository.Entities on scheduleSeat.SeatId equals seat.Id
-                                      where !seat.IsDeleted && !scheduleSeat.IsDeleted
-                                      select new GetScheduleByIdSeatResponse
-                                      {
-                                          Id = scheduleSeat.Id,
-                                          SeatId = seat.Id,
-                                          NumberSeat = seat.NumberSeat,
-                                          SeatCode = seat.SeatCode,
-                                          Status = scheduleSeat.Status
-                                      }).ToListAsync(cancellationToken:cancellationToken);
-            schedule.scheduleSeats = seatSchedule;
             if (schedule == null) return await Result<GetScheduleByIdResponse>.FailAsync("NOT_FOUND_SCHEDULE");
+
+            HashSet<int> lockedSeats = _seatReservationService.GetLockedSeats(request.Id);
+            List<GetScheduleByIdSeatResponse> scheduleSeats = await _seatRepository.Entities
+                .Where(x => x.RoomId == schedule.RoomId)
+                .Select(x => new GetScheduleByIdSeatResponse
+                {
+                    Id = x.Id,
+                    NumberSeat = x.NumberSeat,
+                    SeatCode = x.SeatCode,
+                    Status = lockedSeats.Contains(x.NumberSeat)?SeatStatus.Reserved:SeatStatus.Available
+                }).ToListAsync();
+            schedule.scheduleSeats = scheduleSeats;
             return await Result<GetScheduleByIdResponse>.SuccessAsync(schedule);
         }
     }

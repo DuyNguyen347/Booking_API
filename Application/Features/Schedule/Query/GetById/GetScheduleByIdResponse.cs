@@ -23,7 +23,6 @@ namespace Application.Features.Schedule.Query.GetById
     public class GetScheduleByIdSeatResponse
     {
         public long Id { get; set; }
-        public long SeatId { get; set; }
         public int NumberSeat {  get; set; }
         public string? SeatCode {  get; set; }
         public SeatStatus Status { get; set; }

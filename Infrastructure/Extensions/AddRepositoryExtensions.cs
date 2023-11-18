@@ -45,8 +45,6 @@ using Application.Interfaces.Ticket;
 using Infrastructure.Repositories.Ticket;
 using Infrastructure.Repositories.Seat;
 using Application.Interfaces.Seat;
-using Application.Interfaces.ScheduleSeat;
-using Infrastructure.Repositories.ScheduleSeat;
 
 namespace Infrastructure.Extensions
 {
@@ -148,10 +146,6 @@ namespace Infrastructure.Extensions
         public static void AddTicketRepository(this IServiceCollection services)
         {
             services.AddScoped<ITicketRepository, TicketRepository>();
-        }
-        public static void AddScheduleSeatRepository(this IServiceCollection services)
-        {
-            services.AddScoped<IScheduleSeatRepository, ScheduleSeatRepository>();
         }
     }
 }
