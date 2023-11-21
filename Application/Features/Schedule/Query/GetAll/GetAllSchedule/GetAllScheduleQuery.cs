@@ -8,12 +8,7 @@ using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
 using Domain.Wrappers;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
 {
@@ -68,32 +63,35 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
                 };
                 foreach (var scheduleInfo in cinemaGroup)
                 {
-                    var filmId = scheduleInfo.film.Id;
-                    if (!cinema.Films.ContainsKey(filmId))
+                    if (DateTime.Now < scheduleInfo.schedule.StartTime)
                     {
-                        var film = new GetAllScheduleFilmResponse()
+                        var filmId = scheduleInfo.film.Id;
+                        if (!cinema.Films.ContainsKey(filmId))
                         {
-                            Name = scheduleInfo.film.Name,
-                            Duration = scheduleInfo.film.Duration,
-                            LimitAge = scheduleInfo.film.LimitAge,
-                            StartDate = scheduleInfo.film.StartDate,
-                            EndDate = scheduleInfo.film.EndDate,
-                            Trailer = scheduleInfo.film.Trailer,
-                            Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == scheduleInfo.film.Id).Select(y => y.NameFile).FirstOrDefault()),
-                            Schedules = new List<GetAllScheduleScheduleResponse>()
+                            var film = new GetAllScheduleFilmResponse()
+                            {
+                                Name = scheduleInfo.film.Name,
+                                Duration = scheduleInfo.film.Duration,
+                                LimitAge = scheduleInfo.film.LimitAge,
+                                StartDate = scheduleInfo.film.StartDate,
+                                EndDate = scheduleInfo.film.EndDate,
+                                Trailer = scheduleInfo.film.Trailer,
+                                Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == scheduleInfo.film.Id).Select(y => y.NameFile).FirstOrDefault()),
+                                Schedules = new List<GetAllScheduleScheduleResponse>()
+                            };
+                            cinema.Films.Add(filmId, film);
                         };
-                        cinema.Films.Add(filmId, film);
-                    };
-                    var schedule = new GetAllScheduleScheduleResponse()
-                    {
-                        Id = scheduleInfo.schedule.Id,
-                        Duration = scheduleInfo.schedule.Duration,
-                        StartTime = scheduleInfo.schedule.StartTime,
-                        EndTime = scheduleInfo.schedule.StartTime.AddMinutes(scheduleInfo.schedule.Duration),
-                        RoomId = scheduleInfo.schedule.RoomId,
-                        Price = scheduleInfo.schedule.Price
-                    };
-                    cinema.Films[filmId].Schedules.Add(schedule);
+                        var schedule = new GetAllScheduleScheduleResponse()
+                        {
+                            Id = scheduleInfo.schedule.Id,
+                            Duration = scheduleInfo.schedule.Duration,
+                            StartTime = scheduleInfo.schedule.StartTime,
+                            EndTime = scheduleInfo.schedule.StartTime.AddMinutes(scheduleInfo.schedule.Duration),
+                            RoomId = scheduleInfo.schedule.RoomId,
+                            Price = scheduleInfo.schedule.Price
+                        };
+                        cinema.Films[filmId].Schedules.Add(schedule);
+                    }
                 }
                 result.Add(cinemaGroup.Key, cinema);
             }

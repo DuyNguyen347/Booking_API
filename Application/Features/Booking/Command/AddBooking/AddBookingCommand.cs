@@ -105,9 +105,9 @@ namespace Application.Features.Booking.Command.AddBooking
                     CustomerId = request.CustomerId,
                     ScheduleId = request.ScheduleId
                 };
-                ////Them QR CODE
-                ////
-                booking.Status = _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM);
+                //Them QR CODE
+                //
+                booking.Status = _enumService.GetEnumIdByValue(StaticVariable.WAITING, StaticVariable.BOOKING_STATUS_ENUM);
                 await _bookingRepository.AddAsync(booking);
                 await _unitOfWork.Commit(cancellationToken);
                 request.Id = booking.Id;
