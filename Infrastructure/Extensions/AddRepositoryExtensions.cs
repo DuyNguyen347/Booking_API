@@ -45,6 +45,8 @@ using Application.Interfaces.Ticket;
 using Infrastructure.Repositories.Ticket;
 using Infrastructure.Repositories.Seat;
 using Application.Interfaces.Seat;
+using Application.Interfaces.Merchant;
+using Infrastructure.Repositories.Merchant;
 
 namespace Infrastructure.Extensions
 {
@@ -146,6 +148,10 @@ namespace Infrastructure.Extensions
         public static void AddTicketRepository(this IServiceCollection services)
         {
             services.AddScoped<ITicketRepository, TicketRepository>();
+        }
+        public static void AddMerchantRepository(this IServiceCollection services)
+        {
+            services.AddScoped<IMerchantRepository, MerchantRepository>();
         }
     }
 }

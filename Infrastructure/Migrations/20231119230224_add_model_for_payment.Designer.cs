@@ -4,6 +4,7 @@ using Infrastructure.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231119230224_add_model_for_payment")]
+    partial class addmodelforpayment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -290,8 +293,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("paid_amount");
 
-                    b.Property<string>("QRCode")
-                        .HasColumnType("varchar(max)")
+                    b.Property<byte[]>("QRCode")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)")
                         .HasColumnName("qr_code");
 
                     b.Property<decimal?>("RequiredAmount")
@@ -898,59 +902,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Films");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Merchant.Merchant", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit")
-                        .HasColumnName("isActive");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("LastModifiedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("MerchantIpnUrl")
-                        .HasColumnType("varchar(max)")
-                        .HasColumnName("merchant_ipn_url");
-
-                    b.Property<string>("MerchantName")
-                        .IsRequired()
-                        .HasColumnType("varchar(20)")
-                        .HasColumnName("merchant_name");
-
-                    b.Property<string>("MerchantReturnUrl")
-                        .HasColumnType("varchar(max)")
-                        .HasColumnName("merchant_return_url");
-
-                    b.Property<string>("MerchantWebLink")
-                        .HasColumnType("varchar(max)")
-                        .HasColumnName("merchant_weblink");
-
-                    b.Property<string>("SecretKey")
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("secret_key");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("merchant");
                 });
 
             modelBuilder.Entity("Domain.Entities.Position.Position", b =>

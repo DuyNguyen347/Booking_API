@@ -48,6 +48,7 @@ namespace Application.Features.Film.Queries.GetAll
                             Name = x.Name,
                             Actor = x.Actor,
                             Director = x.Director,
+                            Producer = x.Producer,
                             Duration = x.Duration,
                             Description = x.Description,
                             Year = x.Year,

@@ -13,6 +13,7 @@ namespace Application.Features.Film.Queries.GetAll
         public int Duration { get; set; }
         public string? Description { get; set; }
         public int Year { get; set; }
+        public string ? Producer { get; set; }
         public string? Country { get; set; }
         public int LimitAge { get; set; }
         public string? Trailer { get; set; }
