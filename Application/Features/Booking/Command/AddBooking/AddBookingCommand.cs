@@ -2,6 +2,8 @@
 using Application.Interfaces;
 using Application.Interfaces.Booking;
 using Application.Interfaces.Customer;
+using Application.Interfaces.Merchant;
+using Application.Interfaces.Payment;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Schedule;
 using Application.Interfaces.Seat;
@@ -23,6 +25,7 @@ namespace Application.Features.Booking.Command.AddBooking
         public long CustomerId { get; set; }
         public long ScheduleId { get; set; }
         public List<int> NumberSeats { get; set; }
+        public string? PaymentDestinationId { get; set; } = string.Empty;
     }
 
     internal class AddBookingCommandHandler : IRequestHandler<AddBookingCommand, Result<AddBookingCommand>>
@@ -38,6 +41,8 @@ namespace Application.Features.Booking.Command.AddBooking
         private readonly ICustomerRepository _customerRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IVnPayService _vnPayService;
+        private readonly IMerchantRepository _merchantRepository;
 
         public AddBookingCommandHandler(
             IMapper mapper,
@@ -50,6 +55,8 @@ namespace Application.Features.Booking.Command.AddBooking
             IUnitOfWork<long> unitOfWork,
             ICustomerRepository customerRepository,
             ICurrentUserService currentUserService,
+            IVnPayService vnPayService,
+            IMerchantRepository merchantRepository,
             UserManager<AppUser> userManager)
         {
             _mapper = mapper;
@@ -63,6 +70,8 @@ namespace Application.Features.Booking.Command.AddBooking
             _customerRepository = customerRepository;
             _currentUserService = currentUserService;
             _userManager = userManager;
+            _vnPayService = vnPayService;
+            _merchantRepository = merchantRepository;
         }
 
         public async Task<Result<AddBookingCommand>> Handle(AddBookingCommand request, CancellationToken cancellationToken)
@@ -90,23 +99,26 @@ namespace Application.Features.Booking.Command.AddBooking
                     CustomerId = request.CustomerId,
                     ScheduleId = request.ScheduleId
                 };
-                //Them QR CODE
-                //
+                ////Them QR CODE
+                ////
                 booking.Status = _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM);
                 await _bookingRepository.AddAsync(booking);
                 await _unitOfWork.Commit(cancellationToken);
                 request.Id = booking.Id;
 
                 var listSeats = await (from seat in _seatRepository.Entities
-                                                                   join schedule in _scheduleRepository.Entities on seat.RoomId equals schedule.RoomId
-                                                                   where !seat.IsDeleted && request.NumberSeats.Contains(seat.NumberSeat)
-                                                                   select new
-                                                                   {
-                                                                       seatInfo = seat,
-                                                                       price = schedule.Price
-                                                                   }).ToListAsync();
+                                       join schedule in _scheduleRepository.Entities on seat.RoomId equals schedule.RoomId
+                                       where !seat.IsDeleted && request.NumberSeats.Contains(seat.NumberSeat)
+                                       select new
+                                       {
+                                           seatInfo = seat,
+                                           price = schedule.Price
+                                       }).ToListAsync();
+
+
 
                 List<Domain.Entities.Ticket.Ticket> tickets = new List<Domain.Entities.Ticket.Ticket>();
+                var amount = 0;
                 foreach (var seat in listSeats)
                 {
                     tickets.Add(new Domain.Entities.Ticket.Ticket()
@@ -117,14 +129,44 @@ namespace Application.Features.Booking.Command.AddBooking
                         NumberSeat = seat.seatInfo.NumberSeat,
                         SeatCode = seat.seatInfo.SeatCode
                     });
+                    amount += seat.price;
                 }
+
+                string contentPayment = _currentUserService.UserName + " tt " + string.Join(", ", request.NumberSeats);
+                booking.BookingContent = contentPayment;
+                booking.BookingCurrency = amount.ToString();
+                booking.ExpireDate = DateTime.Now.AddMinutes(15);
+                booking.BookingLanguage = "vn";
+                booking.MerchantId = 1;
+                booking.BookingCurrency = "VND";
+                booking.BookingRefId = booking.Id.ToString();
+
+                Console.WriteLine(_currentUserService.IpAddress);
+                var paymentUrl = string.Empty;
+                var merchant = await _merchantRepository.Entities.FirstOrDefaultAsync();
+                switch (request.PaymentDestinationId)
+                {
+                    case "VNPAY":
+                        _vnPayService.Init(DateTime.Now, _currentUserService.IpAddress ?? string.Empty, amount * 100, "VND",
+                                "other", contentPayment ?? string.Empty,booking.Id.ToString() ?? string.Empty);
+                        paymentUrl = _vnPayService.GetLink(_currentUserService.HostServerName);
+                        booking.MerchantId = merchant.Id;
+                        break;
+                    default:
+                        break;
+                }
+
+                await _bookingRepository.UpdateAsync(booking);
+                Console.WriteLine(paymentUrl.ToString());
                 await _ticketRepository.AddRangeAsync(tickets);
                 await _unitOfWork.Commit(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
-                return await Result<AddBookingCommand>.SuccessAsync(request);
+
+                return await Result<AddBookingCommand>.SuccessAsync(paymentUrl.ToString());
             }
             catch (Exception ex)
             {
+                Console.WriteLine("error create booking : ", ex.ToString());
                 await transaction.RollbackAsync(cancellationToken);
                 throw new ApiException(ex.Message);
             }

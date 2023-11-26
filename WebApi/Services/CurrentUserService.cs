@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Application.Interfaces;
+using Microsoft.Identity.Client;
 
 namespace WebApi.Services
 {
@@ -20,5 +21,7 @@ namespace WebApi.Services
             _httpContextAccessor.HttpContext?.User?.Claims.AsEnumerable()
                 .Select(item => new KeyValuePair<string, string>(item.Type, item.Value))
                 .ToList();
+
+        public string? IpAddress => _httpContextAccessor?.HttpContext?.Connection?.LocalIpAddress?.ToString();
     }
 }

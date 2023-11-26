@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.Payment;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Account;
@@ -7,6 +8,7 @@ using Infrastructure.Contexts;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Infrastructure.Services.Identity;
+using Infrastructure.Services.Payment.VnPay.Request;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +46,7 @@ namespace Infrastructure.Extensions
             services.AddScoped<ICheckSizeFile, CheckFileSize>();
             services.AddScoped<IEnumService, EnumService>();
             services.AddScoped<ISeatReservationService, SeatReservationService>();
+            services.AddScoped<IVnPayService, VnPayService>();
         }
 
         public static void AddRepositories(this IServiceCollection services)
@@ -71,6 +74,7 @@ namespace Infrastructure.Extensions
             services.AddRoomRepository();
             services.AddSeatRepository();
             services.AddTicketRepository();
+            services.AddMerchantRepository();
         }
 
     }
