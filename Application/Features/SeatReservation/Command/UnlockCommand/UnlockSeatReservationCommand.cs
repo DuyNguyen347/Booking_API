@@ -1,4 +1,4 @@
-﻿using Application.Features.Schedule.Command;
+﻿using Application.Features.SeatReservation.Command.AddCommand;
 using Application.Interfaces.Customer;
 using Application.Interfaces.Schedule;
 using Application.Interfaces.Services;
@@ -11,20 +11,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.SeatReservation.Command
+namespace Application.Features.SeatReservation.Command.UnlockCommand
 {
-    public class AddSeatReservationCommand : IRequest<Result<AddSeatReservationCommand>>
+    public class UnlockSeatReservationCommand: IRequest<Result<UnlockSeatReservationCommand>>
     {
         public long CustomerId { get; set; }
         public long ScheduleId { get; set; }
         public List<int> NumberSeats { get; set; }
     }
-    public class AddSeatReservationCommandHandler : IRequestHandler<AddSeatReservationCommand, Result<AddSeatReservationCommand>>
+    public class UnlockSeatReservationCommandHandler : IRequestHandler<UnlockSeatReservationCommand, Result<UnlockSeatReservationCommand>>
     {
         private readonly ISeatReservationService _seatReservationService;
         private readonly ICustomerRepository _customerRepository;
         private readonly IScheduleRepository _scheduleRepository;
-        public AddSeatReservationCommandHandler(
+        public UnlockSeatReservationCommandHandler(
             ISeatReservationService seatReservationService,
             ICustomerRepository customerRepository,
             IScheduleRepository scheduleRepository)
@@ -33,16 +33,14 @@ namespace Application.Features.SeatReservation.Command
             _customerRepository = customerRepository;
             _scheduleRepository = scheduleRepository;
         }
-        public async Task<Result<AddSeatReservationCommand>> Handle(AddSeatReservationCommand request, CancellationToken cancellationToken)
+        public async Task<Result<UnlockSeatReservationCommand>> Handle(UnlockSeatReservationCommand request, CancellationToken cancellationToken)
         {
             var existCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
-            if (existCustomer == null) return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
+            if (existCustomer == null) return await Result<UnlockSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
-            if (existSchedule == null) return await Result<AddSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
-            bool IsSuccess = _seatReservationService.LockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
-            if (!IsSuccess)
-                return Result<AddSeatReservationCommand>.Fail("SEATS_UNAVAILABLE_TEMPORARILY");
-            return Result<AddSeatReservationCommand>.Success(request, "RESERVED_SUCCESSFULLY");
+            if (existSchedule == null) return await Result<UnlockSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
+            _seatReservationService.UnlockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
+            return Result<UnlockSeatReservationCommand>.Success(request, "UNLOCKED_SUCCESSFULLY");
         }
     }
 }
