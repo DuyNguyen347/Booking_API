@@ -47,6 +47,7 @@ namespace Infrastructure.Extensions
             services.AddScoped<IEnumService, EnumService>();
             services.AddSingleton<ISeatReservationService, SeatReservationService>();
             services.AddScoped<IVnPayService, VnPayService>();
+            services.AddScoped<ITimeZoneService, TimeZoneService>();
         }
 
         public static void AddRepositories(this IServiceCollection services)

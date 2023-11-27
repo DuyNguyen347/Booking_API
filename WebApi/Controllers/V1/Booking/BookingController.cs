@@ -57,13 +57,12 @@ namespace WebApi.Controllers.V1.Booking
         /// <returns></returns>
         [Authorize]
         [HttpGet("{id}")]
-        public async Task<IActionResult> BookingDetail(long id)
+        public async Task<ActionResult<Result<GetBookingByIdResponse>>> BookingDetail(long id)
         {
-            var result = await Mediator.Send(new GetBookingByIdQuery
+            return Ok(await Mediator.Send(new GetBookingByIdQuery
             {
                 Id = id
-            });
-            return Ok(result);
+            }));
         }
 
         /// <summary>
@@ -100,13 +99,13 @@ namespace WebApi.Controllers.V1.Booking
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        //[Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
-        //[HttpPatch("update-status")]
-        //public async Task<IActionResult> UpdateStatusBooking(UpdateStatusBookingCommand command)
-        //{
-        //    var result = await Mediator.Send(command);
-        //    return (result.Succeeded) ? Ok(result) : BadRequest(result);
-        //}
+        [Authorize]
+        [HttpPatch("update-status")]
+        public async Task<IActionResult> UpdateStatusBooking(UpdateStatusBookingCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        }
 
         /// <summary>
         /// Get customer booking history
@@ -129,15 +128,14 @@ namespace WebApi.Controllers.V1.Booking
         /// <param name="query"></param>
         /// <returns></returns>
         //[Authorize(Roles = RoleConstants.CustomerRole)]
-        [HttpGet("customer")]
-        public async Task<IActionResult> GetCustomerBooking([FromQuery] GetCustomerBookingQuery query)
-        {
-            return Ok(await Mediator.Send(new GetCustomerBookingQuery
-            {
-                CustomerId = query.CustomerId,
-                KeyWord = query.KeyWord,
-                BookingStatus = query.BookingStatus
-            }));
-        }
+        //[HttpGet("customer")]
+        //public async Task<IActionResult> GetCustomerBooking([FromQuery] GetCustomerBookingQuery query)
+        //{
+        //    return Ok(await Mediator.Send(new GetCustomerBookingQuery
+        //    {
+        //        CustomerId = query.CustomerId,
+        //        KeyWord = query.KeyWord,
+        //    }));
+        //}
     }
 }

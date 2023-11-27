@@ -4,6 +4,7 @@ using Application.Interfaces.Film;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
+using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Wrappers;
 using MediatR;
@@ -29,13 +30,15 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
         private readonly ICinemaRepository _cinemaRepository;
         private readonly IRoomRepository _roomRepository;
         private readonly IUnitOfWork<long> _unitOfWork;
+        private readonly ITimeZoneService _timeZoneService;
         public AddScheduleMultipleCinemasCommandHandler(
             IMapper mapper,
             IScheduleRepository scheduleRepository,
             IFilmRepository filmRepository,
             ICinemaRepository cinemaRepository,
             IRoomRepository roomRepository,
-            IUnitOfWork<long> unitOfWork)
+            IUnitOfWork<long> unitOfWork,
+            ITimeZoneService timeZoneService)
         {
             _mapper = mapper;
             _scheduleRepository = scheduleRepository;
@@ -44,13 +47,14 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
             _cinemaRepository = cinemaRepository;
             _roomRepository = roomRepository;
             _unitOfWork = unitOfWork;
+            _timeZoneService = timeZoneService;
         }
         public async Task<Result<AddScheduleMultipleCinemasResponse>> Handle(AddScheduleMultipleCinemasCommand request, CancellationToken cancellationToken)
         {
             var existFilm = await _filmRepository.FindAsync(x => x.Id == request.FilmId && !x.IsDeleted);         
             if (existFilm == null) return await Result<AddScheduleMultipleCinemasResponse>.FailAsync("NOT_FOUND_FILM");
             if (request.Duration < existFilm.Duration) return await Result<AddScheduleMultipleCinemasResponse>.FailAsync($"DURATION_SHORTER_THAN_FILM_DURATION({existFilm.Duration})");
-            if (request.StartTime.AddHours(-1) < DateTime.Now) return await Result<AddScheduleMultipleCinemasResponse>.FailAsync("NOT_VALID_TIME");
+            if (request.StartTime < _timeZoneService.GetGMT7Time().AddMinutes(30)) return await Result<AddScheduleMultipleCinemasResponse>.FailAsync("NOT_VALID_TIME");
             AddScheduleMultipleCinemasResponse response = new AddScheduleMultipleCinemasResponse()
             {
                 Duration = request.Duration,

@@ -3,6 +3,7 @@ using Application.Interfaces.Film;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
+using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Wrappers;
 using MediatR;
@@ -27,18 +28,21 @@ namespace Application.Features.Schedule.Command.AddSchedule
         private readonly IFilmRepository _filmRepository;
         private readonly IRoomRepository _roomRepository;
         private readonly IUnitOfWork<long> _unitOfWork;
+        private readonly ITimeZoneService _timeZoneService;
         public AddScheduleCommandHandler(
             IMapper mapper, 
             IScheduleRepository scheduleRepository,
             IFilmRepository filmRepository,
             IRoomRepository roomRepository,
-            IUnitOfWork<long> unitOfWork)
+            IUnitOfWork<long> unitOfWork,
+            ITimeZoneService timeZoneService)
         {
             _mapper = mapper;
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
             _roomRepository = roomRepository;
             _unitOfWork = unitOfWork;
+            _timeZoneService = timeZoneService;
         }
         public async Task<Result<List<ScheduleCommandResponse>>> Handle(AddScheduleCommand request, CancellationToken cancellationToken)
         {
@@ -48,7 +52,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
             if (existRoom == null) return await Result<List<ScheduleCommandResponse>>.FailAsync("NOT_FOUND_ROOM");
             if (existRoom.Status != Domain.Constants.Enum.SeatStatus.Available) return await Result<List<ScheduleCommandResponse>>.FailAsync("ROOM_IS_NOT_AVAILABLE");
             if (request.Duration < existFilm.Duration) return await Result<List<ScheduleCommandResponse>>.FailAsync($"DURATION_SHORTER_THAN_FILM_DURATION({existFilm.Duration})");
-            if (request.StartTime < DateTime.Now.AddMinutes(-1)) return await Result<List<ScheduleCommandResponse>>.FailAsync("NOT_VALID_TIME");
+            if (request.StartTime < _timeZoneService.GetGMT7Time().AddMinutes(30)) return await Result<List<ScheduleCommandResponse>>.FailAsync("NOT_VALID_TIME");
             List <ScheduleCommandResponse> listConflictSchedule = await IsScheduleConflict(request);
             if (listConflictSchedule.Count == 0)
             {

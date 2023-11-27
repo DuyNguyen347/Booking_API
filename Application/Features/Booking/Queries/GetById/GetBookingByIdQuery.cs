@@ -63,7 +63,7 @@ namespace Application.Features.Booking.Queries.GetById
             //        return await Result<GetBookingByIdResponse>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
             //}
 
-            var BookingResponse = _mapper.Map<GetBookingByIdResponse>(Booking);
+            var response = _mapper.Map<GetBookingByIdResponse>(Booking);
 
             var CustomerBooking = await _customerRepository.Entities
                 .Where(_ => _.Id == Booking.CustomerId)
@@ -78,8 +78,12 @@ namespace Application.Features.Booking.Queries.GetById
                 return await Result<GetBookingByIdResponse>.FailAsync(StaticVariable.NOT_FOUND_MSG);
             }
 
-            BookingResponse.CustomerName = CustomerBooking.CustomerName;
-            BookingResponse.PhoneNumber = CustomerBooking.PhoneNumber;
+            response.CustomerName = CustomerBooking.CustomerName;
+            response.PhoneNumber = CustomerBooking.PhoneNumber;
+            response.TotalPrice = Booking.RequiredAmount;
+            response.FilmId = await (from schedule in _scheduleRepository.Entities
+                                     where !schedule.IsDeleted && schedule.Id == Booking.ScheduleId
+                                     select schedule.FilmId).FirstOrDefaultAsync();
 
             List<TicketBookingResponse> bookingTickets = await _ticketRepository.Entities
                 .Where(_ => _.BookingId == Booking.Id && !_.IsDeleted)
@@ -91,12 +95,8 @@ namespace Application.Features.Booking.Queries.GetById
                     NumberSeat = s.NumberSeat,
                     SeatCode = s.SeatCode
                 }).ToListAsync();
-            foreach (var ticket in bookingTickets)
-            {
-                BookingResponse.TotalPrice += ticket.Price;
-            }
-            BookingResponse.Tickets = bookingTickets;
-            return await Result<GetBookingByIdResponse>.SuccessAsync(BookingResponse);
+            response.Tickets = bookingTickets;
+            return await Result<GetBookingByIdResponse>.SuccessAsync(response);
         }
     }
 }

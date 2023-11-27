@@ -15,6 +15,7 @@ namespace Infrastructure.Services
         private Dictionary<long, Dictionary<int, SeatLockInfo>> reservation;
         private int timeOutInSecond;
         private readonly object lockObject = new object();
+        private static readonly ITimeZoneService _timeZoneService = new TimeZoneService();
         public SeatReservationService() 
         {
             reservation = new Dictionary<long, Dictionary<int, SeatLockInfo>>();
@@ -50,7 +51,7 @@ namespace Infrastructure.Services
                 }
                 foreach (var seat in numberSeats)
                 {
-                    LockSeat(customerId, scheduleId, seat, DateTime.Now);
+                    LockSeat(customerId, scheduleId, seat, _timeZoneService.GetGMT7Time());
                 }
                 return true;
             }
@@ -120,7 +121,9 @@ namespace Infrastructure.Services
         public int TimeOutInSecond {  get; set; }
         public bool IsExpired()
         {
-            return LockTime.AddSeconds(TimeOutInSecond) < DateTime.Now;
+            TimeZoneInfo gmt7TimeZone;
+            gmt7TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            return LockTime.AddSeconds(TimeOutInSecond) < TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, gmt7TimeZone); ;
         }
     }
 }

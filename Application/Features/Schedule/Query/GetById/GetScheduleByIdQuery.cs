@@ -2,6 +2,7 @@
 using Application.Interfaces.Booking;
 using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
 using Application.Interfaces.Seat;
@@ -9,6 +10,7 @@ using Application.Interfaces.Services;
 using Application.Interfaces.Ticket;
 using Domain.Constants;
 using Domain.Constants.Enum;
+using Domain.Entities.Booking;
 using Domain.Wrappers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +32,8 @@ namespace Application.Features.Schedule.Query.GetById
         private readonly ITicketRepository _ticketRepository;
         private readonly ISeatReservationService _seatReservationService;
         private readonly IEnumService _enumService;
+        private readonly IUnitOfWork<long> _unitOfWork;
+        private readonly ITimeZoneService _timeZoneService;
         public GetScheduleByIdHandler(
             IScheduleRepository scheduleRepository, 
             IFilmRepository filmRepository, 
@@ -39,7 +43,9 @@ namespace Application.Features.Schedule.Query.GetById
             ISeatRepository seatRepository,
             ITicketRepository ticketRepository,
             ISeatReservationService seatReservationService,
-            IEnumService enumService)
+            IEnumService enumService,
+            IUnitOfWork<long> unitOfWork,
+            ITimeZoneService timeZoneService)
         {
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
@@ -50,6 +56,8 @@ namespace Application.Features.Schedule.Query.GetById
             _ticketRepository = ticketRepository;
             _seatReservationService = seatReservationService;
             _enumService = enumService;
+            _unitOfWork = unitOfWork;
+            _timeZoneService = timeZoneService;
         }
         public async Task<Result<GetScheduleByIdResponse>> Handle(GetScheduleByIdQuery request, CancellationToken cancellationToken)
         {
@@ -77,9 +85,13 @@ namespace Application.Features.Schedule.Query.GetById
                                    }).FirstOrDefaultAsync();
             if (schedule == null) return await Result<GetScheduleByIdResponse>.FailAsync("NOT_FOUND_SCHEDULE");
 
+
             HashSet<int> lockedSeats = _seatReservationService.GetLockedSeats(request.Id);
+
             HashSet<int> bookedSeats = (from booking in _bookingRepository.Entities
-                                        where !booking.IsDeleted
+                                        where !booking.IsDeleted  && booking.ScheduleId == schedule.Id
+                                        where booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
+                                        || booking.ExpireDate > _timeZoneService.GetGMT7Time() 
                                         join ticket in _ticketRepository.Entities
                                         on new { BookingId = booking.Id, IsDeleted = false } 
                                         equals new { ticket.BookingId, ticket.IsDeleted }

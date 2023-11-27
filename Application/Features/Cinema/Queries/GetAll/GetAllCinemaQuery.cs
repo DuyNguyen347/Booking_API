@@ -26,8 +26,6 @@ namespace Application.Features.Cinema.Queries.GetAll
             if (request.City != null)
                 request.City = request.City.Trim();
 
-            Console.WriteLine("thanh pho " + request.City);
-
             var query = _cinemaRepository.Entities.AsEnumerable()
                         .Where(x => !x.IsDeleted 
                                 && (string.IsNullOrEmpty(request.City) 
