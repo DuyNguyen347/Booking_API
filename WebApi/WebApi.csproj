@@ -40,5 +40,9 @@
 		<ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
 		<ProjectReference Include="..\Shared\Shared.csproj" />
 	</ItemGroup>
-
+	<ItemGroup>
+		<Content Include="Files\**">
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
 </Project>

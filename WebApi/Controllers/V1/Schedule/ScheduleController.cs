@@ -3,6 +3,7 @@ using Application.Features.Film.Command.DeleteFilm;
 using Application.Features.Room.Command.EditRoom;
 using Application.Features.Room.Queries.GetAll;
 using Application.Features.Schedule.Command.AddSchedule;
+using Application.Features.Schedule.Command.AddScheduleCinemas;
 using Application.Features.Schedule.Command.DeleteSchedule;
 using Application.Features.Schedule.Command.EditSchedule;
 using Application.Features.Schedule.Query.GetAll.GetAll;
@@ -36,9 +37,12 @@ namespace WebApi.Controllers.V1.Schedule
             }));
         }
         [HttpGet]
-        public async Task<ActionResult<Result<Dictionary<long, GetAllScheduleResponse>>>> GetAllSchedule()
+        public async Task<ActionResult<Result<List<GetAllScheduleResponse>>>> GetAllSchedule([FromQuery] GetAllScheduleQuery query)
         {
-            return Ok(await Mediator.Send(new GetAllScheduleQuery()));
+            return Ok(await Mediator.Send(new GetAllScheduleQuery()
+            {
+                CinemaId = query.CinemaId
+            })) ;
         }
         [HttpGet("{id}")]
         public async Task<ActionResult<Result<GetScheduleByIdResponse>>> GetScheduleById(long id)
@@ -67,6 +71,12 @@ namespace WebApi.Controllers.V1.Schedule
             {
                 Id = Id
             });
+            return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        }
+        [HttpPost("cinemas")]
+        public async Task<ActionResult<Result<AddScheduleMultipleCinemasResponse>>> AddScheduleCinemas (AddScheduleMultipleCinemasCommand command)
+        {
+            var result = await Mediator.Send(command);
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
     }

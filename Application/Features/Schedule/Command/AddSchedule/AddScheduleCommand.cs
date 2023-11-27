@@ -6,6 +6,7 @@ using Application.Interfaces.Schedule;
 using AutoMapper;
 using Domain.Wrappers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Schedule.Command.AddSchedule
 {
@@ -90,10 +91,9 @@ namespace Application.Features.Schedule.Command.AddSchedule
         }
         public async Task<List<ScheduleCommandResponse>> IsScheduleConflict(AddScheduleCommand request)
         {
-            var listConflictSchedule = _scheduleRepository.Entities.AsEnumerable().Where(x => request.RoomId == x.RoomId && !x.IsDeleted).
+            var listConflictSchedule = await _scheduleRepository.Entities.Where(x => request.RoomId == x.RoomId && !x.IsDeleted).
                 Where(x => (x.StartTime <= request.StartTime && request.StartTime < x.StartTime.AddMinutes(x.Duration)) ||
                 (request.StartTime <= x.StartTime && x.StartTime < request.StartTime.AddMinutes(request.Duration))).
-                AsQueryable().
                 Select(x => new ScheduleCommandResponse
                 {
                     Id = x.Id,
@@ -103,7 +103,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
                     FilmId = x.FilmId,
                     RoomId = x.RoomId,
                     Price = x.Price
-                }).ToList();
+                }).ToListAsync();
             return listConflictSchedule;
         }
     }
