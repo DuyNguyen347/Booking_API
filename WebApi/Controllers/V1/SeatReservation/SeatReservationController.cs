@@ -5,6 +5,8 @@ using Application.Features.SeatReservation.Command.AddCommand;
 using Application.Features.SeatReservation.Command.UnlockCommand;
 using Application.Features.SeatReservation.Query;
 using Domain.Wrappers;
+using Application.Features.SeatReservation.Query;
+using Domain.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Controllers.V1.Booking;
