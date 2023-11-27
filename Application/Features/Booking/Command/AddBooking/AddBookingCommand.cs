@@ -139,7 +139,7 @@ namespace Application.Features.Booking.Command.AddBooking
                 booking.BookingLanguage = "vn";
                 booking.MerchantId = 1;
                 booking.BookingCurrency = "VND";
-                booking.BookingRefId = booking.Id.ToString();
+                booking.BookingRefId = DateTime.Now.Ticks.ToString();
 
                 Console.WriteLine(_currentUserService.IpAddress);
                 var paymentUrl = string.Empty;
@@ -148,7 +148,7 @@ namespace Application.Features.Booking.Command.AddBooking
                 {
                     case "VNPAY":
                         _vnPayService.Init(DateTime.Now, _currentUserService.IpAddress ?? string.Empty, amount * 100, "VND",
-                                "other", contentPayment ?? string.Empty,booking.Id.ToString() ?? string.Empty);
+                                "other", contentPayment ?? string.Empty,booking.BookingRefId ?? string.Empty);
                         paymentUrl = _vnPayService.GetLink(_currentUserService.HostServerName);
                         booking.MerchantId = merchant.Id;
                         break;
