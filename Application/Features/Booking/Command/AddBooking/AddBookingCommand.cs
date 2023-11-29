@@ -16,6 +16,11 @@ using Domain.Wrappers;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Hangfire;
+using Application.Features.Booking.Command.DeleteBooking;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System.Threading;
+using Domain.Entities.Booking;
 
 namespace Application.Features.Booking.Command.AddBooking
 {
@@ -28,7 +33,7 @@ namespace Application.Features.Booking.Command.AddBooking
         public string? PaymentDestinationId { get; set; } = string.Empty;
     }
 
-    internal class AddBookingCommandHandler : IRequestHandler<AddBookingCommand, Result<AddBookingCommand>>
+    public class AddBookingCommandHandler : IRequestHandler<AddBookingCommand, Result<AddBookingCommand>>
     {
         private readonly IMapper _mapper;
         private readonly IBookingRepository _bookingRepository;
@@ -43,6 +48,7 @@ namespace Application.Features.Booking.Command.AddBooking
         private readonly UserManager<AppUser> _userManager;
         private readonly IVnPayService _vnPayService;
         private readonly IMerchantRepository _merchantRepository;
+        private readonly ITimeZoneService _timeZoneService;
 
         public AddBookingCommandHandler(
             IMapper mapper,
@@ -57,6 +63,7 @@ namespace Application.Features.Booking.Command.AddBooking
             ICurrentUserService currentUserService,
             IVnPayService vnPayService,
             IMerchantRepository merchantRepository,
+            ITimeZoneService timeZoneService,
             UserManager<AppUser> userManager)
         {
             _mapper = mapper;
@@ -72,6 +79,7 @@ namespace Application.Features.Booking.Command.AddBooking
             _userManager = userManager;
             _vnPayService = vnPayService;
             _merchantRepository = merchantRepository;
+            _timeZoneService = timeZoneService;
         }
 
         public async Task<Result<AddBookingCommand>> Handle(AddBookingCommand request, CancellationToken cancellationToken)
@@ -84,38 +92,44 @@ namespace Application.Features.Booking.Command.AddBooking
             //        return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
             //}
 
+            var ExistCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
+            if (ExistCustomer == null) return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
+
+            var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
+            if (existSchedule == null) return await Result<AddBookingCommand>.FailAsync("NOT_FOUND_SCHEDULE");
+
+            foreach (var NumberSeat in request.NumberSeats)
+            {
+                if (!_seatReservationService.ValidateLock(request.CustomerId, request.ScheduleId, NumberSeat))
+                    return await Result<AddBookingCommand>.FailAsync("RESERVATION_TIME_OUT");
+            }
+            _seatReservationService.UnlockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
+            
             //open transaction
             var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var ExistCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
-                if (ExistCustomer == null) return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
-
-                var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
-                if (existSchedule == null) return await Result<AddBookingCommand>.FailAsync("NOT_FOUND_SCHEDULE");
-
                 var booking = new Domain.Entities.Booking.Booking()
                 {
                     CustomerId = request.CustomerId,
                     ScheduleId = request.ScheduleId
                 };
-                ////Them QR CODE
-                ////
-                booking.Status = _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM);
+                //Them QR CODE
+                //
+                booking.Status = _enumService.GetEnumIdByValue(StaticVariable.WAITING, StaticVariable.BOOKING_STATUS_ENUM);
                 await _bookingRepository.AddAsync(booking);
                 await _unitOfWork.Commit(cancellationToken);
                 request.Id = booking.Id;
 
                 var listSeats = await (from seat in _seatRepository.Entities
                                        join schedule in _scheduleRepository.Entities on seat.RoomId equals schedule.RoomId
+                                       where schedule.Id == request.ScheduleId
                                        where !seat.IsDeleted && request.NumberSeats.Contains(seat.NumberSeat)
                                        select new
                                        {
                                            seatInfo = seat,
                                            price = schedule.Price
                                        }).ToListAsync();
-
-
 
                 List<Domain.Entities.Ticket.Ticket> tickets = new List<Domain.Entities.Ticket.Ticket>();
                 var amount = 0;
@@ -134,8 +148,9 @@ namespace Application.Features.Booking.Command.AddBooking
 
                 string contentPayment = _currentUserService.UserName + " tt " + string.Join(", ", request.NumberSeats);
                 booking.BookingContent = contentPayment;
-                booking.BookingCurrency = amount.ToString();
-                booking.ExpireDate = DateTime.Now.AddMinutes(15);
+                booking.RequiredAmount = amount;
+                booking.BookingDate = _timeZoneService.GetGMT7Time();
+                booking.ExpireDate = _timeZoneService.GetGMT7Time().AddMinutes(15);
                 booking.BookingLanguage = "vn";
                 booking.MerchantId = 1;
                 booking.BookingCurrency = "VND";
@@ -147,8 +162,8 @@ namespace Application.Features.Booking.Command.AddBooking
                 switch (request.PaymentDestinationId)
                 {
                     case "VNPAY":
-                        _vnPayService.Init(DateTime.Now, _currentUserService.IpAddress ?? string.Empty, amount * 100, "VND",
-                                "other", contentPayment ?? string.Empty,booking.BookingRefId ?? string.Empty);
+                        _vnPayService.Init(_timeZoneService.GetGMT7Time(), _currentUserService.IpAddress ?? string.Empty, amount * 100, "VND",
+                                "other", contentPayment ?? string.Empty,booking.Id.ToString() ?? string.Empty);
                         paymentUrl = _vnPayService.GetLink(_currentUserService.HostServerName);
                         booking.MerchantId = merchant.Id;
                         break;
@@ -174,6 +189,20 @@ namespace Application.Features.Booking.Command.AddBooking
             {
                 await transaction.DisposeAsync();
             }
+        }
+        private async Task DeleteExpiredBooking(AddBookingCommand request, CancellationToken cancellationToken)
+        {
+            var booking = await _bookingRepository.FindAsync(x => x.Id == request.Id && !x.IsDeleted);
+            if (booking == null) return;
+            if (booking.Status != _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
+            {
+                var tickets = await (from ticket in _ticketRepository.Entities
+                                     where !ticket.IsDeleted && ticket.BookingId == booking.Id
+                                     select ticket).ToListAsync();
+                await _ticketRepository.DeleteRange(tickets);
+                await _bookingRepository.DeleteAsync(booking);
+                await _unitOfWork.Commit(cancellationToken);
+            };
         }
     }
 }

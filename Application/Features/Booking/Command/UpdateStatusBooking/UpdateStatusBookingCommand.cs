@@ -58,6 +58,11 @@ namespace Application.Features.Booking.Command.UpdateStatusBooking
             //        await _unitOfWork.Commit(cancellationToken);
             //    }
             //}
+
+            ExistBooking.Status = request.BookingStatus;
+            await _bookingRepository.UpdateAsync(ExistBooking);
+            await _unitOfWork.Commit(cancellationToken);
+
             return await Result<UpdateStatusBookingCommand>.SuccessAsync(StaticVariable.SUCCESS);
         }
     }

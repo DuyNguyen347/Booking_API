@@ -58,13 +58,16 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
                 {
                     scheduleData[schedule.city][schedule.cinemId] = new List<GetAllScheduleByFilmResponse>();
                 }
-                scheduleData[schedule.city][schedule.cinemId].Add(new GetAllScheduleByFilmResponse
+                if (schedule.schedule.StartTime > DateTime.Now)
                 {
-                    Id = schedule.schedule.Id,
-                    StartTime = schedule.schedule.StartTime,
-                    EndTime = schedule.schedule.StartTime.AddMinutes(schedule.schedule.Duration),
-                    Price = schedule.schedule.Price,
-                });
+                    scheduleData[schedule.city][schedule.cinemId].Add(new GetAllScheduleByFilmResponse
+                    {
+                        Id = schedule.schedule.Id,
+                        StartTime = schedule.schedule.StartTime,
+                        EndTime = schedule.schedule.StartTime.AddMinutes(schedule.schedule.Duration),
+                        Price = schedule.schedule.Price,
+                    });
+                }
             };
             return await Result<Dictionary<string, Dictionary<long, List<GetAllScheduleByFilmResponse>>>>.SuccessAsync(scheduleData);
         }

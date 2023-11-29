@@ -43,9 +43,8 @@ namespace Application.Features.Booking.Queries.GetAll
                             Id = booking.Id,
                             CustomerName = customer.CustomerName,
                             PhoneNumber = customer.PhoneNumber,
-                            Status = booking.Status,
-                            CreatedOn = booking.CreatedOn,
-                            LastModifiedOn = booking.LastModifiedOn,
+                            TotalPrice = booking.RequiredAmount,
+                            BookingDate = booking.BookingDate
                         };
 
             var data = query.AsQueryable().OrderBy(request.OrderBy);

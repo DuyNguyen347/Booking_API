@@ -39,7 +39,7 @@ namespace Infrastructure.Services.Payment.VnPay.Request
             this.vnp_OrderInfo = orderInfo;
             this.vnp_ReturnUrl = _currentUserService.HostServerName + _config.ReturnUrl;
             this.vnp_TxnRef = txnRef;
-            this.vnp_ExpireDate = DateTime.Now.AddMinutes(15).ToString("yyyyMMddHHmmss");
+            this.vnp_ExpireDate = createDate.AddMinutes(15).ToString("yyyyMMddHHmmss");
         }
 
         public string GetLink(string urlHostName)

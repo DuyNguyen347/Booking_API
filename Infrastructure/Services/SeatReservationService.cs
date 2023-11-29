@@ -1,4 +1,5 @@
 ﻿using Application.Dtos.Requests;
+using Application.Dtos.Responses;
 using Application.Interfaces.Services;
 using Domain.Entities.Seat;
 using System;
@@ -14,10 +15,28 @@ namespace Infrastructure.Services
         private Dictionary<long, Dictionary<int, SeatLockInfo>> reservation;
         private int timeOutInSecond;
         private readonly object lockObject = new object();
+        private static readonly ITimeZoneService _timeZoneService = new TimeZoneService();
         public SeatReservationService() 
         {
             reservation = new Dictionary<long, Dictionary<int, SeatLockInfo>>();
             timeOutInSecond = 300;
+        }
+        public Dictionary<long, Dictionary<int, AddSeatReservationResponse>> GetAll()
+        {
+            Dictionary<long, Dictionary<int, AddSeatReservationResponse>> LockSeats = new Dictionary<long, Dictionary<int, AddSeatReservationResponse>>();
+            foreach(var (scheduleId, seat) in reservation)
+            {
+                LockSeats[scheduleId] = new Dictionary<int, AddSeatReservationResponse>();
+                foreach (var (numberSeat, info) in seat)
+                {
+                    LockSeats[scheduleId][numberSeat] = new AddSeatReservationResponse()
+                    {
+                        LockTime = info.LockTime,
+                        LockBy = info.LockBy
+                    };
+                }
+            }
+            return LockSeats;
         }
         public bool LockSeats(long customerId, long scheduleId, List<int> numberSeats)
         {
@@ -32,7 +51,7 @@ namespace Infrastructure.Services
                 }
                 foreach (var seat in numberSeats)
                 {
-                    LockSeat(customerId, scheduleId, seat, DateTime.Now);
+                    LockSeat(customerId, scheduleId, seat, _timeZoneService.GetGMT7Time());
                 }
                 return true;
             }
@@ -85,7 +104,7 @@ namespace Infrastructure.Services
             reservation[scheduleId][numberSeat].LockTime = lockTime;
             reservation[scheduleId][numberSeat].LockBy = customerId;
         }
-        private bool ValidateLock(long customerId, long scheduleId, int numberSeat)
+        public bool ValidateLock(long customerId, long scheduleId, int numberSeat)
         {
             return IsSeatLocked(scheduleId, numberSeat) && reservation[scheduleId][numberSeat].LockBy == customerId;
         }
@@ -102,7 +121,9 @@ namespace Infrastructure.Services
         public int TimeOutInSecond {  get; set; }
         public bool IsExpired()
         {
-            return LockTime.AddSeconds(TimeOutInSecond) < DateTime.Now;
+            TimeZoneInfo gmt7TimeZone;
+            gmt7TimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            return LockTime.AddSeconds(TimeOutInSecond) < TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, gmt7TimeZone); ;
         }
     }
 }

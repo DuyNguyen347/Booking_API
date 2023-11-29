@@ -18,6 +18,8 @@ namespace Application.Features.Schedule.Query.GetById
         public long CinemaId {  get; set; }
         public long RoomId {  get; set; }
         public int Price { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public DateTime? LastModifiedOn {  get; set; }
         public List<GetScheduleByIdSeatResponse>? scheduleSeats { get; set; }
     }
     public class GetScheduleByIdSeatResponse
