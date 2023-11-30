@@ -163,7 +163,7 @@ namespace Application.Features.Booking.Command.AddBooking
                 {
                     case "VNPAY":
                         _vnPayService.Init(_timeZoneService.GetGMT7Time(), _currentUserService.IpAddress ?? string.Empty, amount * 100, "VND",
-                                "other", contentPayment ?? string.Empty,booking.Id.ToString() ?? string.Empty);
+                                "other", contentPayment ?? string.Empty,booking.BookingRefId ?? string.Empty);
                         paymentUrl = _vnPayService.GetLink(_currentUserService.HostServerName);
                         booking.MerchantId = merchant.Id;
                         break;
