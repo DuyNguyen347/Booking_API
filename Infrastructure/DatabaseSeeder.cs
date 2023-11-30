@@ -84,8 +84,8 @@ namespace Infrastructure
                 //Check if User Exists
                 var superUser = new AppUser()
                 {
-                    FullName = "Nguyen Phuoc Le Hieu",
-                    Email = "lehieu.qrt@gmail.com",
+                    FullName = "Nguyen Duc Duy",
+                    Email = "ducduy347.study@gmail.com",
                     UserName = "superadmin",
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true,
