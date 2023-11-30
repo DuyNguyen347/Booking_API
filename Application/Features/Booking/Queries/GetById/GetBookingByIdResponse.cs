@@ -8,15 +8,17 @@ namespace Application.Features.Booking.Queries.GetById
         public long Id { get; set; }
         public string? CustomerName { get; set; }
         public string? PhoneNumber { get; set; }
-        public long ScheduleId { get; set; }
-        public long FilmId { get; set; }
         public decimal? TotalPrice { get; set; }
         public string? BookingCurrency {  get; set; }
         public string? BookingLanguage {  get; set; }
         public DateTime? BookingDate { get; set; }
-        public string? QRCode {  get; set; }
+        public DateTime StartTime { get; set; }
+        public string? CinemaName {  get; set; }
+        public string? FilmName {  get; set; }
+        public string? RoomName { get; set; }
+        public string? Image {  get; set; }
         public List<TicketBookingResponse> Tickets { get; set; } = new List<TicketBookingResponse>();
-
+        public string? QRCode { get; set; }
     }
 
     public class TicketBookingResponse
