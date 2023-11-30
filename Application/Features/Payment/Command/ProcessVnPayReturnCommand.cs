@@ -81,12 +81,12 @@ namespace Application.Features.Payment.Command
                         result.PaymentId = booking.BookingRefId;
                         
 
-                        string data = $"{result.PaymentId},{result.Amount},{result.PaymentMessage},{result.PaymentStatus},{result.PaymentDate}"; 
+                        string data = $"{result.PaymentId}"; 
                         QRCodeGenerator qRCodeGenerator = new QRCodeGenerator();
                         QRCodeData qRCodeData = qRCodeGenerator.CreateQrCode(data,QRCodeGenerator.ECCLevel.Q);
 
                         Base64QRCode qrCode = new Base64QRCode(qRCodeData);
-                        string qrCodeImageAsBase64 = qrCode.GetGraphic(20);
+                        string qrCodeImageAsBase64 = qrCode.GetGraphic(10);
                         result.QRCode = qrCodeImageAsBase64;
                         booking.QRCode = qrCodeImageAsBase64;
                         await _bookingRepository.UpdateAsync(booking);
