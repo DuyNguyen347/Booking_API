@@ -20,6 +20,8 @@ using Application.Interfaces.Merchant;
 using QRCoder;
 using System.Drawing;
 using iTextSharp.text.html.simpleparser;
+using Microsoft.EntityFrameworkCore;
+using Domain.Entities.Booking;
 
 namespace Application.Features.Payment.Command
 {
@@ -59,7 +61,9 @@ namespace Application.Features.Payment.Command
         public async Task<Result<ProcessVnPayReturnResponse>> Handle(ProcessVnPayReturnCommand request, CancellationToken cancellationToken)
         {
             var result = new ProcessVnPayReturnResponse() { };
-            string returnUrl;
+            var merchant = await _merchantRepository.Entities.FirstOrDefaultAsync();
+            if (merchant == null) return await Result<ProcessVnPayReturnResponse>.FailAsync("NOT_FOUND_MERCHANT");
+            string returnUrl = merchant.MerchantReturnUrl ?? string.Empty;
             try
             {
                 //var isValidSign = request.IsValidSignature();
@@ -67,16 +71,15 @@ namespace Application.Features.Payment.Command
                 {
                     result.Amount = request.vnp_Amount;
                     result.PaymentDate = request.vnp_PayDate;
-                    var booking = await _bookingRepository.GetByIdAsync(long.Parse(request.vnp_TxnRef));
+                    var booking = await _bookingRepository.Entities.Where(x => x.BookingRefId == request.vnp_TxnRef).FirstOrDefaultAsync();
                     if (booking != null)
                     {
                         result.PaymentStatus = "00";
                         booking.Status = (int)BookingStatus.Done;
                         result.Signature = Guid.NewGuid().ToString();
                         result.PaymentMessage = "Payment Success";
-                        result.PaymentId = booking.Id.ToString();
-                        var merchant = await _merchantRepository.GetByIdAsync(booking.MerchantId);
-                        returnUrl = merchant.MerchantReturnUrl ?? string.Empty;
+                        result.PaymentId = booking.BookingRefId;
+                        
 
                         string data = $"{result.PaymentId},{result.Amount},{result.PaymentMessage},{result.PaymentStatus},{result.PaymentDate}"; 
                         QRCodeGenerator qRCodeGenerator = new QRCodeGenerator();
@@ -103,14 +106,14 @@ namespace Application.Features.Payment.Command
                     result.PaymentMessage = "Payment Failed";
                 }
                
-                return await Result<ProcessVnPayReturnResponse>.FailAsync(result,"");
+                return await Result<ProcessVnPayReturnResponse>.FailAsync(result,returnUrl);
             } 
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
                 result.PaymentStatus = "10";
                 result.PaymentMessage = "Payment Failed";
-                return await Result<ProcessVnPayReturnResponse>.FailAsync(result,"");
+                return await Result<ProcessVnPayReturnResponse>.FailAsync(result,returnUrl);
             }
         }
     }

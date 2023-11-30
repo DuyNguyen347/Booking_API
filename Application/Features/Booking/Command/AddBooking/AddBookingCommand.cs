@@ -163,7 +163,7 @@ namespace Application.Features.Booking.Command.AddBooking
                 booking.BookingLanguage = "vn";
                 booking.MerchantId = 1;
                 booking.BookingCurrency = "VND";
-                booking.BookingRefId = booking.Id.ToString();
+                booking.BookingRefId = DateTime.Now.Ticks.ToString();
 
                 Console.WriteLine(_currentUserService.IpAddress);
                 var paymentUrl = string.Empty;
