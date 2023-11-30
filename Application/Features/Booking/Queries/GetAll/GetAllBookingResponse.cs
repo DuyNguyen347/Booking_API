@@ -7,6 +7,7 @@
         public string CustomerName { get; set; }
 
         public string PhoneNumber { get; set; }
+
         public decimal? TotalPrice { get; set; }
 
         public DateTime? BookingDate { get; set; }

@@ -1,5 +1,8 @@
-﻿using Application.Interfaces.Booking;
+﻿using Application.Interfaces;
+using Application.Interfaces.Booking;
 using Application.Interfaces.Customer;
+using Application.Parameters;
+using Domain.Constants;
 using Domain.Helpers;
 using Domain.Wrappers;
 using MediatR;
@@ -7,7 +10,7 @@ using System.Linq.Dynamic.Core;
 
 namespace Application.Features.Booking.Queries.GetAll
 {
-    public class GetAllBookingQuery : GetAllBookingParameter, IRequest<PaginatedResult<GetAllBookingResponse>>
+    public class GetAllBookingQuery : RequestParameter, IRequest<PaginatedResult<GetAllBookingResponse>>
     {
     }
 
@@ -15,11 +18,16 @@ namespace Application.Features.Booking.Queries.GetAll
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IEnumService _enumService;
 
-        public GetAllBookingHandler(IBookingRepository bookingRepository, ICustomerRepository customerRepository)
+        public GetAllBookingHandler(
+            IBookingRepository bookingRepository, 
+            ICustomerRepository customerRepository,
+            IEnumService enumService)
         {
             _bookingRepository = bookingRepository;
             _customerRepository = customerRepository;
+            _enumService = enumService;
         }
 
         public async Task<PaginatedResult<GetAllBookingResponse>> Handle(GetAllBookingQuery request, CancellationToken cancellationToken)
@@ -34,10 +42,7 @@ namespace Application.Features.Booking.Queries.GetAll
                                 || StringHelper.Contains(customer.CustomerName, request.Keyword)
                                 || booking.Id.ToString().Contains(request.Keyword)
                                 || customer.PhoneNumber.Contains(request.Keyword))
-                                //&& (!request.BookingDate.HasValue || booking.BookingDate.Equals(request.BookingDate))
-                                //&& (!request.FromTime.HasValue || booking.FromTime >= request.FromTime)
-                                //&& (!request.ToTime.HasValue || booking.ToTime <= request.ToTime)
-                                && (!request.Status.HasValue || booking.Status.Equals(request.Status))
+                        where booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
                         select new GetAllBookingResponse
                         {
                             Id = booking.Id,

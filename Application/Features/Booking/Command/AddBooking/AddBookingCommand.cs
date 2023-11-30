@@ -104,7 +104,16 @@ namespace Application.Features.Booking.Command.AddBooking
                     return await Result<AddBookingCommand>.FailAsync("RESERVATION_TIME_OUT");
             }
             _seatReservationService.UnlockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
-            
+
+            var existTickets = await (from booking in _bookingRepository.Entities
+                                      where !booking.IsDeleted && booking.ScheduleId == request.ScheduleId
+                                      join ticket in _ticketRepository.Entities
+                                      on booking.Id equals ticket.BookingId
+                                      where !ticket.IsDeleted && request.NumberSeats.Contains(ticket.NumberSeat)
+                                      select ticket).ToListAsync();
+            if (existTickets.Count>0)
+                return await Result<AddBookingCommand>.FailAsync("EXISTING_BOOKED_NUMBERSEATS");
+
             //open transaction
             var transaction = await _unitOfWork.BeginTransactionAsync();
             try
@@ -174,6 +183,7 @@ namespace Application.Features.Booking.Command.AddBooking
                 await _bookingRepository.UpdateAsync(booking);
                 Console.WriteLine(paymentUrl.ToString());
                 await _ticketRepository.AddRangeAsync(tickets);
+                BackgroundJob.Schedule(() => DeleteExpiredBooking(request, new CancellationToken()), TimeSpan.FromMinutes(15));
                 await _unitOfWork.Commit(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
@@ -190,7 +200,7 @@ namespace Application.Features.Booking.Command.AddBooking
                 await transaction.DisposeAsync();
             }
         }
-        private async Task DeleteExpiredBooking(AddBookingCommand request, CancellationToken cancellationToken)
+        public async Task DeleteExpiredBooking(AddBookingCommand request, CancellationToken cancellationToken)
         {
             var booking = await _bookingRepository.FindAsync(x => x.Id == request.Id && !x.IsDeleted);
             if (booking == null) return;
