@@ -107,6 +107,8 @@ namespace Application.Features.Booking.Command.AddBooking
 
             var existTickets = await (from booking in _bookingRepository.Entities
                                       where !booking.IsDeleted && booking.ScheduleId == request.ScheduleId
+                                      where booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
+                                      || booking.ExpireDate > _timeZoneService.GetGMT7Time()
                                       join ticket in _ticketRepository.Entities
                                       on booking.Id equals ticket.BookingId
                                       where !ticket.IsDeleted && request.NumberSeats.Contains(ticket.NumberSeat)

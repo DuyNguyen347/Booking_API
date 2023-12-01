@@ -22,7 +22,7 @@ namespace Application.Features.Booking.Queries.GetById
 {
     public class GetBookingByIdQuery : IRequest<Result<GetBookingByIdResponse>>
     {
-        public long Id { get; set; }
+        public string PaymentId { get; set; }
     }
     internal class GetBookingByIdQueryHandler : IRequestHandler<GetBookingByIdQuery, Result<GetBookingByIdResponse>>
     {
@@ -78,7 +78,7 @@ namespace Application.Features.Booking.Queries.GetById
             //}
 
             var Booking = await _bookingRepository.Entities
-                .Where(booking => booking.Id == request.Id && !booking.IsDeleted)
+                .Where(booking => booking.BookingRefId == request.PaymentId && !booking.IsDeleted)
                 .Select(booking => booking).FirstOrDefaultAsync();
             if(Booking == null)
             {

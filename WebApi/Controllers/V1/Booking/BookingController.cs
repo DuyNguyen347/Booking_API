@@ -57,12 +57,12 @@ namespace WebApi.Controllers.V1.Booking
         /// <param name="Id"></param>
         /// <returns></returns>
         [Authorize]
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Result<GetBookingByIdResponse>>> BookingDetail(long id)
+        [HttpGet("{paymentId}")]
+        public async Task<ActionResult<Result<GetBookingByIdResponse>>> BookingDetail(string paymentId)
         {
             return Ok(await Mediator.Send(new GetBookingByIdQuery
             {
-                Id = id
+                PaymentId = paymentId
             }));
         }
 
