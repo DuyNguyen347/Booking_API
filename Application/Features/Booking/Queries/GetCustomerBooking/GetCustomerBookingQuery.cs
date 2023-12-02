@@ -2,6 +2,10 @@
 using Application.Interfaces;
 using Application.Interfaces.Booking;
 using Application.Interfaces.BookingDetail;
+using Application.Interfaces.Cinema;
+using Application.Interfaces.Film;
+using Application.Interfaces.Room;
+using Application.Interfaces.Schedule;
 using Application.Interfaces.Service;
 using Application.Interfaces.ServiceImage;
 using Application.Interfaces.Ticket;
@@ -30,20 +34,29 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
         private readonly IBookingRepository _bookingRepository;
         private readonly IEnumService _enumService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IScheduleRepository _scheduleRepository;
+        private readonly IFilmRepository _filmRepository;
+        private readonly IRoomRepository _roomRepository;
+        private readonly ICinemaRepository _cinemaRepository;
         private readonly UserManager<AppUser> _userManager;
 
         public GetCustomerBookingQueryHandler(
             IBookingRepository bookingRepository,
-            ITicketRepository ticketRepository,
-            IMapper mapper, 
             IEnumService enumService, 
-            IUploadService uploadService, 
-            ICurrentUserService currentUserService, 
+            ICurrentUserService currentUserService,
+            IScheduleRepository scheduleRepository,
+            IFilmRepository filmRepository,
+            IRoomRepository roomRepository,
+            ICinemaRepository cinemaRepository,
             UserManager<AppUser> userManager)
         {
             _bookingRepository = bookingRepository;
             _enumService = enumService;
             _currentUserService = currentUserService;
+            _scheduleRepository = scheduleRepository;
+            _filmRepository = filmRepository;
+            _roomRepository = roomRepository;
+            _cinemaRepository = cinemaRepository;
             _userManager = userManager;
         }
 
@@ -61,10 +74,37 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                 .Select(s => new GetCustomerBookingResponse
                 {
                     Id = s.Id,
+                    BookingRefId = s.BookingRefId,
                     BookingDate = s.BookingDate,
+                    FilmName = GetFilmNameBySchedule(s.ScheduleId),
+                    CinemaName = GetCinemaNameBySchedule(s.ScheduleId),
                     TotalPrice = s.RequiredAmount,
+                    BookingCurrency = s.BookingCurrency
                 }).ToListAsync();
+
             return await Result<List<GetCustomerBookingResponse>>.SuccessAsync(bookings);
+        }
+        private string? GetFilmNameBySchedule(long ScheduleId)
+        {
+            var filmName = (from schedule in _scheduleRepository.Entities
+                            where !schedule.IsDeleted && schedule.Id == ScheduleId
+                            join film in _filmRepository.Entities
+                            on schedule.FilmId equals film.Id
+                            where !film.IsDeleted
+                            select film.Name).FirstOrDefault();
+            return filmName;
+        }
+        private string? GetCinemaNameBySchedule(long ScheduleId)
+        {
+            var cinemaName = (from schedule in _scheduleRepository.Entities
+                              where !schedule.IsDeleted && schedule.Id == ScheduleId
+                              join room in _roomRepository.Entities
+                              on schedule.RoomId equals room.Id
+                              join cinema in _cinemaRepository.Entities
+                              on room.CinemaId equals cinema.Id
+                              where !room.IsDeleted && !cinema.IsDeleted
+                              select cinema.Name).FirstOrDefault();
+            return cinemaName;
         }
     }
 }
