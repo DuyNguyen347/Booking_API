@@ -76,28 +76,37 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                     Id = s.Id,
                     BookingRefId = s.BookingRefId,
                     BookingDate = s.BookingDate,
-                    FilmName = GetFilmNameBySchedule(s.ScheduleId),
-                    CinemaName = GetCinemaNameBySchedule(s.ScheduleId),
                     TotalPrice = s.RequiredAmount,
                     BookingCurrency = s.BookingCurrency
                 }).ToListAsync();
+            foreach (var booking in bookings)
+            {
+                booking.FilmName = GetFilmNameByBooking(booking.Id);
+                booking.CinemaName = GetCinemaNameByBooking(booking.Id);
+            }
 
             return await Result<List<GetCustomerBookingResponse>>.SuccessAsync(bookings);
         }
-        private string? GetFilmNameBySchedule(long ScheduleId)
+        public string? GetFilmNameByBooking(long BookingId)
         {
-            var filmName = (from schedule in _scheduleRepository.Entities
-                            where !schedule.IsDeleted && schedule.Id == ScheduleId
+            var filmName = (from booking in _bookingRepository.Entities
+                            where !booking.IsDeleted && booking.Id == BookingId
+                            join schedule in _scheduleRepository.Entities
+                            on booking.ScheduleId equals schedule.Id
+                            where !schedule.IsDeleted 
                             join film in _filmRepository.Entities
                             on schedule.FilmId equals film.Id
                             where !film.IsDeleted
                             select film.Name).FirstOrDefault();
             return filmName;
         }
-        private string? GetCinemaNameBySchedule(long ScheduleId)
+        public string? GetCinemaNameByBooking(long BookingId)
         {
-            var cinemaName = (from schedule in _scheduleRepository.Entities
-                              where !schedule.IsDeleted && schedule.Id == ScheduleId
+            var cinemaName = (from booking in _bookingRepository.Entities
+                              where !booking.IsDeleted && booking.Id == BookingId
+                              join schedule in _scheduleRepository.Entities
+                              on booking.ScheduleId equals schedule.Id
+                              where !schedule.IsDeleted
                               join room in _roomRepository.Entities
                               on schedule.RoomId equals room.Id
                               join cinema in _cinemaRepository.Entities

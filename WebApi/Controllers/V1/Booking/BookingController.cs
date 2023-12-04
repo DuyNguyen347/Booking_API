@@ -59,11 +59,12 @@ namespace WebApi.Controllers.V1.Booking
         [Authorize]
         [HttpGet("{paymentId}")]
         public async Task<ActionResult<Result<GetBookingByIdResponse>>> BookingDetail(string paymentId)
-        {
-            return Ok(await Mediator.Send(new GetBookingByIdQuery
+        {   
+            var result = await Mediator.Send(new GetBookingByIdQuery
             {
                 PaymentId = paymentId
-            }));
+            });
+            return result.Succeeded ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -133,10 +134,11 @@ namespace WebApi.Controllers.V1.Booking
         [HttpGet("customer")]
         public async Task<IActionResult> GetCustomerBooking([FromQuery] GetCustomerBookingQuery query)
         {
-            return Ok(await Mediator.Send(new GetCustomerBookingQuery
+            var result = await Mediator.Send(new GetCustomerBookingQuery
             {
                 CustomerId = query.CustomerId,
-            }));
+            });
+            return result.Succeeded? Ok(result): BadRequest(result);
         }
     }
 }
