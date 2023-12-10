@@ -17,20 +17,21 @@ namespace WebApi.Controllers.V1.SeatReservation
     [Route("api/v{version:apiVersion}/reserve")]
     public class SeatReservationController: BaseApiController<SeatReservationController>
     {
-        //[Authorize]
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddSeatReservation(AddSeatReservationCommand command)
         {
             var result = await Mediator.Send(command);
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
+        [Authorize]
         [HttpPost("unlock")]
         public async Task<IActionResult> UnlockSeatReservation(UnlockSeatReservationCommand command)
         {
             var result = await Mediator.Send(command);
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
-        //[Authorize]
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<Result<Dictionary<long, Dictionary<int, AddSeatReservationResponse>>>>> GetAllSeatReservation()
         {

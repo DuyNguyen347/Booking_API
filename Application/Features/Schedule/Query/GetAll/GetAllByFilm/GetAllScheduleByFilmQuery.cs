@@ -6,6 +6,7 @@ using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
+using Application.Interfaces.Services;
 using Domain.Entities.Films;
 using Domain.Entities.Schedule;
 using Domain.Wrappers;
@@ -24,13 +25,20 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
         private readonly IFilmRepository _filmRepository;
         private readonly ICinemaRepository _cinemaRepository;
         private readonly IRoomRepository _roomRepository;
+        private readonly ITimeZoneService _timeZoneService;
 
-        public GetAllScheduleByFilmHander(IScheduleRepository scheduleRepository, IFilmRepository filmRepository, ICinemaRepository cinemaRepository, IRoomRepository roomRepository)
+        public GetAllScheduleByFilmHander(
+            IScheduleRepository scheduleRepository, 
+            IFilmRepository filmRepository, 
+            ICinemaRepository cinemaRepository, 
+            IRoomRepository roomRepository,
+            ITimeZoneService timeZoneService)
         {
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
             _cinemaRepository = cinemaRepository;
             _roomRepository = roomRepository;
+            _timeZoneService = timeZoneService;
         }
         public async Task<Result<Dictionary<string, Dictionary<long, List<GetAllScheduleByFilmResponse>>>>> Handle(GetAllScheduleByFilmQuery request, CancellationToken cancellationToken)
         {
@@ -48,6 +56,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
                                        cinemId = cinema.Id,
                                        city = cinema.City
                                    }).ToListAsync();
+            var availableToBookTime = _timeZoneService.GetGMT7Time().AddMinutes(30);
             foreach (var schedule in schedules)
             {
                 if (!scheduleData.ContainsKey(schedule.city))
@@ -58,7 +67,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
                 {
                     scheduleData[schedule.city][schedule.cinemId] = new List<GetAllScheduleByFilmResponse>();
                 }
-                if (schedule.schedule.StartTime > DateTime.Now)
+                if (schedule.schedule.StartTime > availableToBookTime)
                 {
                     scheduleData[schedule.city][schedule.cinemId].Add(new GetAllScheduleByFilmResponse
                     {

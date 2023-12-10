@@ -3,7 +3,9 @@ using Application.Features.Schedule.Command;
 using Application.Interfaces;
 using Application.Interfaces.Booking;
 using Application.Interfaces.Customer;
+using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
+using Application.Interfaces.Seat;
 using Application.Interfaces.Services;
 using Application.Interfaces.Ticket;
 using Domain.Constants;
@@ -29,6 +31,8 @@ namespace Application.Features.SeatReservation.Command.AddCommand
         private readonly ISeatReservationService _seatReservationService;
         private readonly ICustomerRepository _customerRepository;
         private readonly IScheduleRepository _scheduleRepository;
+        private readonly IRoomRepository _roomRepository;
+        private readonly ISeatRepository _seatRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly ITicketRepository _ticketRepository;
         private readonly IEnumService _enumService;
@@ -37,6 +41,8 @@ namespace Application.Features.SeatReservation.Command.AddCommand
             ISeatReservationService seatReservationService,
             ICustomerRepository customerRepository,
             IScheduleRepository scheduleRepository,
+            IRoomRepository roomRepository,
+            ISeatRepository seatRepository,
             IBookingRepository bookingRepository,
             ITicketRepository ticketRepository,
             IEnumService enumService,
@@ -45,6 +51,8 @@ namespace Application.Features.SeatReservation.Command.AddCommand
             _seatReservationService = seatReservationService;
             _customerRepository = customerRepository;
             _scheduleRepository = scheduleRepository;
+            _roomRepository = roomRepository;
+            _seatRepository = seatRepository;
             _bookingRepository = bookingRepository;
             _ticketRepository = ticketRepository;
             _enumService = enumService;
@@ -56,6 +64,17 @@ namespace Application.Features.SeatReservation.Command.AddCommand
             if (existCustomer == null) return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<AddSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
+            
+            var existSeats = await (from schedule in _scheduleRepository.Entities
+                                    where !schedule.IsDeleted && schedule.Id == request.ScheduleId
+                                    join room in _roomRepository.Entities
+                                    on new { Id = schedule.RoomId, IsDeleted = false } equals new { room.Id, room.IsDeleted }
+                                    join seat in _seatRepository.Entities
+                                    on new { RoomId = room.Id, IsDeleted = false } equals new { seat.RoomId, seat.IsDeleted }
+                                    where request.NumberSeats.Contains(seat.NumberSeat)
+                                    select seat.NumberSeat).ToListAsync();
+            if (existSeats.Count < request.NumberSeats.Count)
+                return Result<AddSeatReservationCommand>.Fail("NUMBERSEATS_NOT_EXIST");
 
             var existTickets = await (from booking in _bookingRepository.Entities
                                       where !booking.IsDeleted && booking.ScheduleId == request.ScheduleId
@@ -70,6 +89,7 @@ namespace Application.Features.SeatReservation.Command.AddCommand
                 if (request.NumberSeats.Contains(ticket))
                     return await Result<AddSeatReservationCommand>.FailAsync("EXISTING_BOOKED_NUMBERSEATS");
             }
+            
 
             bool IsSuccess = _seatReservationService.LockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
             if (!IsSuccess)

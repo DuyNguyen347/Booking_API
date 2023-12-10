@@ -6,6 +6,7 @@ using Application.Interfaces.Film;
 using Application.Interfaces.FilmImage;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
+using Application.Interfaces.Services;
 using Domain.Wrappers;
 using MediatR;
 
@@ -24,12 +25,14 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
         private readonly IRoomRepository _roomRepository;
         private readonly IUploadService _uploadService;
         private readonly IFilmImageRepository _filmImageRepository;
+        private readonly ITimeZoneService _timeZoneService;
         public GetAllScheduleHandler(IScheduleRepository scheduleRepository, 
             IFilmRepository filmRepository, 
             ICinemaRepository cinemaRepository, 
             IRoomRepository roomRepository,
             IUploadService uploadService,
-            IFilmImageRepository filmImageRepository)
+            IFilmImageRepository filmImageRepository,
+            ITimeZoneService timeZoneService)
         {
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
@@ -37,12 +40,14 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
             _roomRepository = roomRepository;
             _uploadService = uploadService;
             _filmImageRepository = filmImageRepository;
+            _timeZoneService = timeZoneService;
         }
         public async Task<Result<List<GetAllScheduleResponse>>> Handle(GetAllScheduleQuery request, CancellationToken cancellationToken)
         {
+            var availableToBookTime = _timeZoneService.GetGMT7Time().AddMinutes(30);
             var result = new List<GetAllScheduleResponse>();
             var availableSchedule = (from schedule in _scheduleRepository.Entities
-                                     where schedule.StartTime.AddMinutes(30) > DateTime.Now
+                                     where schedule.StartTime > availableToBookTime
                                      select schedule);
             var query = (from cinema in _cinemaRepository.Entities 
                          where !cinema.IsDeleted && (request.CinemaId == null || cinema.Id == request.CinemaId)
