@@ -25,5 +25,6 @@ namespace Application.Features.Film.Queries.GetById
         public List<string>? Image { get; set; }
         public string? Poster { get; set; }
         public DateTime CreatedOn { get; set; }
+        public decimal? Score {  get; set; }
     }
 }

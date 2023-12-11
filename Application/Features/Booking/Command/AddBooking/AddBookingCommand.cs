@@ -84,13 +84,13 @@ namespace Application.Features.Booking.Command.AddBooking
 
         public async Task<Result<AddBookingCommand>> Handle(AddBookingCommand request, CancellationToken cancellationToken)
         {
-            //if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
-            //{
-            //    long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
+            if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
+            {
+                long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
 
-            //    if (userId != request.CustomerId)
-            //        return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
-            //}
+                if (userId != request.CustomerId)
+                    return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
+            }
 
             var ExistCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
             if (ExistCustomer == null) return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);

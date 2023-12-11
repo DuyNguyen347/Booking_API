@@ -54,13 +54,13 @@ namespace Application.Features.Booking.Command.DeleteBooking
             {
                 var booking = await _bookingRepository.FindAsync(x => x.Id == request.Id && !x.IsDeleted);
                 if (booking == null) return await Result<long>.FailAsync(StaticVariable.NOT_FOUND_MSG);
-                //if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
-                //{
-                //    long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
+                if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
+                {
+                    long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
 
-                //    if (userId != booking.CustomerId)
-                //        return await Result<long>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
-                //}
+                    if (userId != booking.CustomerId)
+                        return await Result<long>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
+                }
 
                 if (booking.Status != _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
                 {
