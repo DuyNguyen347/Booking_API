@@ -47,6 +47,8 @@ using Infrastructure.Repositories.Seat;
 using Application.Interfaces.Seat;
 using Application.Interfaces.Merchant;
 using Infrastructure.Repositories.Merchant;
+using Application.Interfaces.Review;
+using Infrastructure.Repositories.Review;
 using Application.Interfaces.Poster;
 using Infrastructure.Repositories.Poster;
 using Application.Interfaces.CinemaImage;
@@ -156,6 +158,10 @@ namespace Infrastructure.Extensions
         public static void AddMerchantRepository(this IServiceCollection services)
         {
             services.AddScoped<IMerchantRepository, MerchantRepository>();
+        }
+        public static void AddReviewRepository(this IServiceCollection services)
+        {
+            services.AddScoped<IReviewRepository, ReviewRepository>();
         }
         public static void AddPosterRepository(this IServiceCollection services)
         {

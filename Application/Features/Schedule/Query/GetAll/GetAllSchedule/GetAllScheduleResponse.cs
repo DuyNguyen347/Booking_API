@@ -29,6 +29,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
         public DateTime EndDate { get; set; }
         public string? Trailer {  get; set; }
         public string? Image {  get; set; }
+        public decimal? Score {  get; set; }
         public List<GetAllScheduleScheduleResponse> Schedules {  get; set; }
     }
     public class GetAllScheduleScheduleResponse

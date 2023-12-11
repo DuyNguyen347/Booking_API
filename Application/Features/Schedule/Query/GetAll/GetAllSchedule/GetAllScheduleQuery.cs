@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.FilmImage;
+using Application.Interfaces.Review;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
 using Application.Interfaces.Services;
@@ -26,13 +27,16 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
         private readonly IUploadService _uploadService;
         private readonly IFilmImageRepository _filmImageRepository;
         private readonly ITimeZoneService _timeZoneService;
-        public GetAllScheduleHandler(IScheduleRepository scheduleRepository, 
+        private readonly IReviewRepository _reviewRepository;
+        public GetAllScheduleHandler(
+            IScheduleRepository scheduleRepository, 
             IFilmRepository filmRepository, 
             ICinemaRepository cinemaRepository, 
             IRoomRepository roomRepository,
             IUploadService uploadService,
             IFilmImageRepository filmImageRepository,
-            ITimeZoneService timeZoneService)
+            ITimeZoneService timeZoneService,
+            IReviewRepository reviewRepository)
         {
             _scheduleRepository = scheduleRepository;
             _filmRepository = filmRepository;
@@ -41,6 +45,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
             _uploadService = uploadService;
             _filmImageRepository = filmImageRepository;
             _timeZoneService = timeZoneService;
+            _reviewRepository = reviewRepository;
         }
         public async Task<Result<List<GetAllScheduleResponse>>> Handle(GetAllScheduleQuery request, CancellationToken cancellationToken)
         {
@@ -99,6 +104,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
                         EndDate = filmGroup.First().film.EndDate,
                         Trailer = filmGroup.First().film.Trailer,
                         Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == filmGroup.First().film.Id).Select(y => y.NameFile).FirstOrDefault()),
+                        Score = _reviewRepository.GetFilmReviewScore(filmGroup.First().film.Id),
                         Schedules = new List<GetAllScheduleScheduleResponse>()
                     };
                     foreach (var scheduleInfo in filmGroup)

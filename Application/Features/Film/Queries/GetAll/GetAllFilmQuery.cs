@@ -8,6 +8,7 @@ using System.Linq.Dynamic.Core;
 using Application.Interfaces.FilmImage;
 using Application.Interfaces.Category;
 using Application.Interfaces.CategoryFilm;
+using Application.Interfaces.Review;
 
 namespace Application.Features.Film.Queries.GetAll
 {
@@ -23,14 +24,22 @@ namespace Application.Features.Film.Queries.GetAll
         private readonly IFilmImageRepository _filmImageRepository;
         private readonly ICategoryFilmRepository _categoryFilmRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IReviewRepository  _reviewRepository;
 
-        public GetAllFilmHandler(IFilmRepository filmRepository, IUploadService uploadService, IFilmImageRepository filmImageRepository, ICategoryFilmRepository categoryFilmRepository, ICategoryRepository categoryRepository)
+        public GetAllFilmHandler(
+            IFilmRepository filmRepository, 
+            IUploadService uploadService, 
+            IFilmImageRepository filmImageRepository, 
+            ICategoryFilmRepository categoryFilmRepository, 
+            ICategoryRepository categoryRepository,
+            IReviewRepository reviewRepository)
         {
             _filmRepository = filmRepository;
             _uploadService = uploadService;
             _filmImageRepository = filmImageRepository;
             _categoryFilmRepository = categoryFilmRepository;
             _categoryRepository = categoryRepository;
+            _reviewRepository = reviewRepository;
         }
 
         public async Task<PaginatedResult<GetAllFilmResponse>> Handle(GetAllFilmQuery request, CancellationToken cancellationToken)
@@ -61,7 +70,8 @@ namespace Application.Features.Film.Queries.GetAll
                             LastModifiedOn = x.LastModifiedOn,
                             Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == x.Id).Select(y => y.NameFile).FirstOrDefault()),
                             Poster = _uploadService.GetFullUrl(x.Poster),
-                            Category = GetCategory(x.Id)
+                            Category = GetCategory(x.Id),
+                            Score = _reviewRepository.GetFilmReviewScore(x.Id),
                         });
             var data = query.OrderBy(request.OrderBy);
             var totalRecord = data.Count();

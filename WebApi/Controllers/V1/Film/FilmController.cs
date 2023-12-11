@@ -38,7 +38,7 @@ namespace WebApi.Controllers.V1.Film
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        //[Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpPost]
         public async Task<IActionResult> AddFilm(AddFilmCommand command)
         {
@@ -68,7 +68,7 @@ namespace WebApi.Controllers.V1.Film
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        //[Authorize]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpPut]
         public async Task<IActionResult> EditFilm(EditFilmCommand command)
         {
@@ -81,7 +81,7 @@ namespace WebApi.Controllers.V1.Film
         /// </summary>
         /// <param name="Id"></param>
         /// <returns></returns>
-        //[Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpDelete]
         public async Task<IActionResult> DeleteFilm(long Id)
         {
