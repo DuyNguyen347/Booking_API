@@ -31,6 +31,8 @@ using Domain.Entities.Trailer;
 using Domain.Entities.Ticket;
 using Domain.Entities.Merchant;
 using Domain.Entities.Review;
+using Domain.Entities.Poster;
+using Domain.Entities.CinemaImage;
 
 namespace Infrastructure.Contexts
 {
@@ -76,6 +78,8 @@ namespace Infrastructure.Contexts
         public virtual DbSet<Ticket> Tickets { get; set; }
         public virtual DbSet<Merchant> Merchants { get; set; }
         public virtual DbSet<Review> Reviews { get; set; }
+        public virtual DbSet<Poster> Posters { get; set; }
+        public virtual DbSet<CinemaImage> CinemaImages { get; set; }
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new())
         {
             foreach (var entry in ChangeTracker.Entries<IAuditableEntity>().ToList())

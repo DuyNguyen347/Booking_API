@@ -27,8 +27,8 @@ namespace Application.Features.Cinema.Queries.GetAll
                 request.City = request.City.Trim();
 
             var query = _cinemaRepository.Entities.AsEnumerable()
-                        .Where(x => !x.IsDeleted 
-                                && (string.IsNullOrEmpty(request.City) 
+                        .Where(x => !x.IsDeleted
+                                && (string.IsNullOrEmpty(request.City)
                                 || x.City == request.City)
                                 && (string.IsNullOrEmpty(request.Keyword)
                                 || StringHelper.Contains(x.Name, request.Keyword)))
@@ -39,9 +39,13 @@ namespace Application.Features.Cinema.Queries.GetAll
                             Name = x.Name,
                             Description = x.Description,
                             City = x.City,
+                            Hotline = x.Hotline,
+                            Latitude = x.Latitude,
+                            Longitude = x.Longitude,
+                            Address = x.Address,
                             CreatedOn = x.CreatedOn,
                             LastModifiedOn = x.LastModifiedOn
-                        });
+                        }) ;
             var data = query.OrderBy(request.OrderBy);
             var totalRecord = data.Count();
             List<GetAllCinemaResponse> result;

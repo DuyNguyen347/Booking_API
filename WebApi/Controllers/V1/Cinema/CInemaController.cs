@@ -8,6 +8,7 @@ using Application.Features.Film.Command.DeleteFilm;
 using Application.Features.Film.Queries.GetAll;
 using Application.Features.Film.Queries.GetById;
 using Domain.Wrappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,6 +40,7 @@ namespace WebApi.Controllers.V1.Cinema
         /// <param name="command"></param>
         /// <returns></returns>
         //[Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddCinema(AddCinemaCommand command)
         {
@@ -50,6 +52,8 @@ namespace WebApi.Controllers.V1.Cinema
         /// </summary>
         /// <param name="parameter"></param>
         /// <returns></returns>
+        /// 
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<GetAllCinemaResponse>>> GetAllFilm([FromQuery] GetAllCinemaQuery query)
         {
@@ -69,7 +73,7 @@ namespace WebApi.Controllers.V1.Cinema
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        //[Authorize]
+        [Authorize]
         [HttpPut]
         public async Task<IActionResult> EditCinema(EditCinemaCommand command)
         {
@@ -83,6 +87,7 @@ namespace WebApi.Controllers.V1.Cinema
         /// <param name="Id"></param>
         /// <returns></returns>
         //[Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [Authorize]
         [HttpDelete]
         public async Task<IActionResult> DeleteCinema(long Id)
         {

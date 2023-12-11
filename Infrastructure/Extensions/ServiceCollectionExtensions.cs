@@ -76,6 +76,8 @@ namespace Infrastructure.Extensions
             services.AddSeatRepository();
             services.AddTicketRepository();
             services.AddMerchantRepository();
+            services.AddPosterRepository();
+            services.AddCinemaImageRepository();
         }
 
     }
