@@ -49,6 +49,10 @@ using Application.Interfaces.Merchant;
 using Infrastructure.Repositories.Merchant;
 using Application.Interfaces.Review;
 using Infrastructure.Repositories.Review;
+using Application.Interfaces.Poster;
+using Infrastructure.Repositories.Poster;
+using Application.Interfaces.CinemaImage;
+using Infrastructure.Repositories.CinemaImage;
 
 namespace Infrastructure.Extensions
 {
@@ -158,6 +162,14 @@ namespace Infrastructure.Extensions
         public static void AddReviewRepository(this IServiceCollection services)
         {
             services.AddScoped<IReviewRepository, ReviewRepository>();
+        }
+        public static void AddPosterRepository(this IServiceCollection services)
+        {
+            services.AddScoped<IPosterRepository, PosterRepository>();
+        }
+        public static void AddCinemaImageRepository(this IServiceCollection services)
+        {
+            services.AddScoped<ICinemaImageRepository, CinemaImageRepository>();
         }
     }
 }

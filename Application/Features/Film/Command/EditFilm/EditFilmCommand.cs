@@ -77,7 +77,8 @@ namespace Application.Features.Film.Command.EditFilm
 
                 await _categoryFilmRepository.RemoveRangeAsync(oldListCateFilm);
             
-                List<CategoryFilm> newlistCateFilm = request.ListIdCategory.Select(x => new CategoryFilm
+                List<CategoryFilm> newlistCateFilm = request.ListIdCategory.Select(x 
+=> new CategoryFilm
                 {
                     CategoryId = x,
                     FilmId = request.Id
@@ -97,6 +98,7 @@ namespace Application.Features.Film.Command.EditFilm
                 }
 
                 await _unitOfWork.Commit(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
                 request.Id = editFilm.Id;
                 return await Result<EditFilmCommand>.SuccessAsync(request);
             }

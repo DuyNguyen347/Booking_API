@@ -47,6 +47,8 @@ namespace WebApi.Controllers.V1.Cinema
         /// </summary>
         /// <param name="parameter"></param>
         /// <returns></returns>
+        /// 
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<GetAllCinemaResponse>>> GetAllCinema([FromQuery] GetAllCinemaQuery query)
         {
