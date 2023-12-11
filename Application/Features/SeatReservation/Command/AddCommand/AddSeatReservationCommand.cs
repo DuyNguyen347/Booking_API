@@ -9,8 +9,10 @@ using Application.Interfaces.Seat;
 using Application.Interfaces.Services;
 using Application.Interfaces.Ticket;
 using Domain.Constants;
+using Domain.Entities;
 using Domain.Wrappers;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -37,6 +39,8 @@ namespace Application.Features.SeatReservation.Command.AddCommand
         private readonly ITicketRepository _ticketRepository;
         private readonly IEnumService _enumService;
         private readonly ITimeZoneService _timeZoneService;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly UserManager<AppUser> _userManager; 
         public AddSeatReservationCommandHandler(
             ISeatReservationService seatReservationService,
             ICustomerRepository customerRepository,
@@ -46,7 +50,9 @@ namespace Application.Features.SeatReservation.Command.AddCommand
             IBookingRepository bookingRepository,
             ITicketRepository ticketRepository,
             IEnumService enumService,
-            ITimeZoneService timeZoneService)
+            ITimeZoneService timeZoneService,
+            ICurrentUserService currentUserService,
+            UserManager<AppUser> userManager)
         {
             _seatReservationService = seatReservationService;
             _customerRepository = customerRepository;
@@ -57,11 +63,18 @@ namespace Application.Features.SeatReservation.Command.AddCommand
             _ticketRepository = ticketRepository;
             _enumService = enumService;
             _timeZoneService = timeZoneService;
+            _currentUserService = currentUserService;
+            _userManager = userManager;
         }
         public async Task<Result<AddSeatReservationCommand>> Handle(AddSeatReservationCommand request, CancellationToken cancellationToken)
         {
+            long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
+            if (userId != request.CustomerId)
+                return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
+
             var existCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
             if (existCustomer == null) return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
+
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<AddSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
             

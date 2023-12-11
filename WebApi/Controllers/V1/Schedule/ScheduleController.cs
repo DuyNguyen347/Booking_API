@@ -1,8 +1,4 @@
-﻿using Application.Features.Film.Command.AddFilm;
-using Application.Features.Film.Command.DeleteFilm;
-using Application.Features.Room.Command.EditRoom;
-using Application.Features.Room.Queries.GetAll;
-using Application.Features.Schedule.Command.AddSchedule;
+﻿using Application.Features.Schedule.Command.AddSchedule;
 using Application.Features.Schedule.Command.AddScheduleCinemas;
 using Application.Features.Schedule.Command.DeleteSchedule;
 using Application.Features.Schedule.Command.EditSchedule;
@@ -12,7 +8,7 @@ using Application.Features.Schedule.Query.GetAll.GetAllSchedule;
 using Application.Features.Schedule.Query.GetById;
 using Domain.Wrappers;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Controllers.V1.Film;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApi.Controllers.V1.Schedule
 {
@@ -28,6 +24,7 @@ namespace WebApi.Controllers.V1.Schedule
                 FilmId = id
             }));
         }
+
         [HttpGet("cinema/{id}")]
         public async Task<ActionResult<Result<List<GetAllScheduleByCinemaResponse>>>> GetAllScheduleByCinema(long id)
         {
@@ -36,6 +33,7 @@ namespace WebApi.Controllers.V1.Schedule
                 CinemaId = id
             }));
         }
+
         [HttpGet]
         public async Task<ActionResult<Result<List<GetAllScheduleResponse>>>> GetAllSchedule([FromQuery] GetAllScheduleQuery query)
         {
@@ -44,6 +42,7 @@ namespace WebApi.Controllers.V1.Schedule
                 CinemaId = query.CinemaId
             })) ;
         }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Result<GetScheduleByIdResponse>>> GetScheduleById(long id)
         {
@@ -52,18 +51,24 @@ namespace WebApi.Controllers.V1.Schedule
                 Id = id
             }));
         }
+
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddSchedule(AddScheduleCommand command)
         {
             var result = await Mediator.Send(command);
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
+
+        [Authorize]
         [HttpPut]
         public async Task<IActionResult> EditSchedule(EditScheduleCommand command)
         {
             var result = await Mediator.Send(command);
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
+
+        [Authorize]
         [HttpDelete]
         public async Task<IActionResult> DeleteSchedule(long Id)
         {
@@ -73,6 +78,8 @@ namespace WebApi.Controllers.V1.Schedule
             });
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
+
+        [Authorize]
         [HttpPost("cinemas")]
         public async Task<ActionResult<Result<AddScheduleMultipleCinemasResponse>>> AddScheduleCinemas (AddScheduleMultipleCinemasCommand command)
         {

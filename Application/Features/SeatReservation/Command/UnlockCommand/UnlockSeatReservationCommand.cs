@@ -1,10 +1,13 @@
 ﻿using Application.Features.SeatReservation.Command.AddCommand;
+using Application.Interfaces;
 using Application.Interfaces.Customer;
 using Application.Interfaces.Schedule;
 using Application.Interfaces.Services;
 using Domain.Constants;
+using Domain.Entities;
 using Domain.Wrappers;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,17 +27,27 @@ namespace Application.Features.SeatReservation.Command.UnlockCommand
         private readonly ISeatReservationService _seatReservationService;
         private readonly ICustomerRepository _customerRepository;
         private readonly IScheduleRepository _scheduleRepository;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly UserManager<AppUser> _userManager;
         public UnlockSeatReservationCommandHandler(
             ISeatReservationService seatReservationService,
             ICustomerRepository customerRepository,
-            IScheduleRepository scheduleRepository)
+            IScheduleRepository scheduleRepository,
+            ICurrentUserService currentUserService,
+            UserManager<AppUser> userManager)
         {
             _seatReservationService = seatReservationService;
             _customerRepository = customerRepository;
             _scheduleRepository = scheduleRepository;
+            _currentUserService = currentUserService;
+            _userManager = userManager;
         }
         public async Task<Result<UnlockSeatReservationCommand>> Handle(UnlockSeatReservationCommand request, CancellationToken cancellationToken)
         {
+            long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
+            if (userId != request.CustomerId)
+                return await Result<UnlockSeatReservationCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
+
             var existCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
             if (existCustomer == null) return await Result<UnlockSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);

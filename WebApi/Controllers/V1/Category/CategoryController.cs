@@ -1,6 +1,8 @@
 ﻿using Application.Features.Category.Command.AddCategory;
 using Application.Features.Category.Queries.GetAll;
+using Domain.Constants;
 using Domain.Wrappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers.V1.Category
@@ -30,6 +32,7 @@ namespace WebApi.Controllers.V1.Category
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
+        [Authorize(Roles = RoleConstants.AdministratorRole)]
         [HttpPost]
         public async Task<IActionResult> AddCategory(AddCategoryCommand command)
         {
