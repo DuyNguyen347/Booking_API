@@ -73,7 +73,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
                     {
                         Id = schedule.schedule.Id,
                         StartTime = schedule.schedule.StartTime,
-                        EndTime = schedule.schedule.StartTime.AddMinutes(schedule.schedule.Duration),
+                        EndTime = schedule.schedule.StartTime.AddMinutes(existFilm.Duration),
                         Price = schedule.schedule.Price,
                     });
                 }

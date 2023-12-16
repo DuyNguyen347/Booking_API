@@ -24,6 +24,7 @@ namespace Application.Features.Film.Queries.GetAll
         public DateTime CreatedOn { get; set; }
         public DateTime? LastModifiedOn { get; set; }
         public string? Poster { get; set; }
+        public int NumberOfVotes {  get; set; }
         public decimal? Score {  get; set; }
     }
 }

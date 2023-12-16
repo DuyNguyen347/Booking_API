@@ -104,6 +104,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
                         EndDate = filmGroup.First().film.EndDate,
                         Trailer = filmGroup.First().film.Trailer,
                         Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == filmGroup.First().film.Id).Select(y => y.NameFile).FirstOrDefault()),
+                        NumberOfVotes = _reviewRepository.GetFilmNumberOfReviews(filmGroup.First().film.Id),
                         Score = _reviewRepository.GetFilmReviewScore(filmGroup.First().film.Id),
                         Schedules = new List<GetAllScheduleScheduleResponse>()
                     };
@@ -114,7 +115,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
                             Id = scheduleInfo.schedule.Id,
                             Duration = scheduleInfo.schedule.Duration,
                             StartTime = scheduleInfo.schedule.StartTime,
-                            EndTime = scheduleInfo.schedule.StartTime.AddMinutes(scheduleInfo.schedule.Duration),
+                            EndTime = scheduleInfo.schedule.StartTime.AddMinutes(film.Duration),
                             RoomId = scheduleInfo.schedule.RoomId,
                             Price = scheduleInfo.schedule.Price
                         };

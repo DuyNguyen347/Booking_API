@@ -392,3 +392,5 @@ FodyWeavers.xsd
 WebApi/Files
 /WebApi/Properties/PublishProfiles/registry.hub.docker.com_trinhdc97.pubxml
 /.dockerignore
+/.dockerignore
+/WebApi/Dockerfile
