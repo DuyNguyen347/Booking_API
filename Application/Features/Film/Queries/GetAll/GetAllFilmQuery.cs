@@ -71,6 +71,7 @@ namespace Application.Features.Film.Queries.GetAll
                             Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == x.Id).Select(y => y.NameFile).FirstOrDefault()),
                             Poster = _uploadService.GetFullUrl(x.Poster),
                             Category = GetCategory(x.Id),
+                            NumberOfVotes = _reviewRepository.GetFilmNumberOfReviews(x.Id),
                             Score = _reviewRepository.GetFilmReviewScore(x.Id),
                         });
             var data = query.OrderBy(request.OrderBy);

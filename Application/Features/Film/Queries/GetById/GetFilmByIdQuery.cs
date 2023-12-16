@@ -63,6 +63,7 @@ namespace Application.Features.Film.Queries.GetById
                 CreatedOn = x.CreatedOn,
                 Poster = _uploadService.GetFullUrl(x.Poster),
                 //Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == x.Id).Select(y => y.NameFile).FirstOrDefault())
+                NumberOfVotes = _reviewRepository.GetFilmNumberOfReviews(x.Id),
                 Score = _reviewRepository.GetFilmReviewScore(x.Id)
             }).FirstOrDefault();
             
