@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Poster;
+﻿using Application.Interfaces;
+using Application.Interfaces.Poster;
 using Application.Parameters;
 using Domain.Wrappers;
 using MediatR;
@@ -12,9 +13,11 @@ namespace Application.Features.Poster.Queries.GetAll
     public class GetAllPosterHandler : IRequestHandler<GetAllPosterQuery, PaginatedResult<GetAllPosterReponse>>
     {
         private readonly IPosterRepository _PosterRepository;
-        public GetAllPosterHandler(IPosterRepository PosterRepository)
+        private readonly IUploadService _uploadServiceRepository;
+        public GetAllPosterHandler(IPosterRepository PosterRepository, IUploadService uploadServiceRepository)
         {
             _PosterRepository = PosterRepository;
+            _uploadServiceRepository = uploadServiceRepository;
         }
         public async Task<PaginatedResult<GetAllPosterReponse>> Handle(GetAllPosterQuery request, CancellationToken cancellationToken)
         {
@@ -27,6 +30,8 @@ namespace Application.Features.Poster.Queries.GetAll
                         .Select(x => new GetAllPosterReponse
                         {
                             Id = x.Id,
+                            LinkUrl = x.LinkUrl,
+                            PathImage = _uploadServiceRepository.GetFullUrl(x.PathImage),
                             CreatedOn = x.CreatedOn,
                             LastModifiedOn = x.LastModifiedOn
                         });
