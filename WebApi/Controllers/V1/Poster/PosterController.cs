@@ -32,7 +32,6 @@ namespace WebApi.Controllers.V1.Poster
         /// <param name="parameter"></param>
         /// <returns></returns>
         /// 
-        [Authorize]
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<GetAllPosterReponse>>> GetAllFilm([FromQuery] GetAllPosterQuery query)
         {
