@@ -1,14 +1,10 @@
-﻿using Application.Dtos.Responses.ServiceImage;
+﻿using Application.Features.Cinema.Queries.GetAll;
 using Application.Interfaces;
 using Application.Interfaces.Booking;
-using Application.Interfaces.BookingDetail;
 using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
-using Application.Interfaces.Service;
-using Application.Interfaces.ServiceImage;
-using Application.Interfaces.Ticket;
 using Application.Parameters;
 using AutoMapper;
 using Domain.Constants;
@@ -20,16 +16,18 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Application.Features.Booking.Queries.GetCustomerBooking
 {
-    public class GetCustomerBookingQuery : RequestParameter, IRequest<Result<List<GetCustomerBookingResponse>>>
+    public class GetCustomerBookingQuery : RequestParameter, IRequest<PaginatedResult<GetCustomerBookingResponse>>
     {
         [Required]
         public long CustomerId { get; set; }
     }
 
-    internal class GetCustomerBookingQueryHandler : IRequestHandler<GetCustomerBookingQuery, Result<List<GetCustomerBookingResponse>>>
+    internal class GetCustomerBookingQueryHandler : IRequestHandler<GetCustomerBookingQuery, PaginatedResult<GetCustomerBookingResponse>>
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly IEnumService _enumService;
@@ -60,12 +58,12 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
             _userManager = userManager;
         }
 
-        public async Task<Result<List<GetCustomerBookingResponse>>> Handle(GetCustomerBookingQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<GetCustomerBookingResponse>> Handle(GetCustomerBookingQuery request, CancellationToken cancellationToken)
         {
             long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
 
             if (userId != request.CustomerId)
-                return await Result<List<GetCustomerBookingResponse>>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
+                return PaginatedResult<GetCustomerBookingResponse>.Failure(new List<string> { StaticVariable.NOT_FOUND_CUSTOMER});
 
             var bookings = await _bookingRepository.Entities.Where(
                 _ => !_.IsDeleted && 
@@ -85,7 +83,19 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                 booking.CinemaName = GetCinemaNameByBooking(booking.Id);
             }
 
-            return await Result<List<GetCustomerBookingResponse>>.SuccessAsync(bookings);
+            if (request.Keyword != null)
+                request.Keyword = request.Keyword.Trim();
+
+            List<GetCustomerBookingResponse> result = bookings.Where(x => string.IsNullOrEmpty(request.Keyword)
+                                || StringHelper.Contains(x.FilmName, request.Keyword)
+                                || StringHelper.Contains(x.CinemaName, request.Keyword)).OrderBy(x =>x.BookingDate).ToList();
+
+            var totalRecord = result.Count();
+
+            if (!request.IsExport)
+                result = result.Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize).ToList();
+
+            return PaginatedResult<GetCustomerBookingResponse>.Success(result, totalRecord, request.PageNumber, request.PageSize);
         }
         public string? GetFilmNameByBooking(long BookingId)
         {
