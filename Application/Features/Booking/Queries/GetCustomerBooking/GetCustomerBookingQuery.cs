@@ -9,15 +9,12 @@ using Application.Parameters;
 using AutoMapper;
 using Domain.Constants;
 using Domain.Entities;
-using Domain.Entities.Booking;
 using Domain.Helpers;
 using Domain.Wrappers;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Linq.Dynamic.Core;
 
 namespace Application.Features.Booking.Queries.GetCustomerBooking
 {
@@ -65,35 +62,44 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
             if (userId != request.CustomerId)
                 return PaginatedResult<GetCustomerBookingResponse>.Failure(new List<string> { StaticVariable.NOT_FOUND_CUSTOMER});
 
-            var bookings = await _bookingRepository.Entities.Where(
+            var query = _bookingRepository.Entities
+                .AsEnumerable()
+                .Where(
                 _ => !_.IsDeleted && 
                 _.CustomerId == request.CustomerId &&
                 _.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)) 
+                .AsQueryable()
                 .Select(s => new GetCustomerBookingResponse
                 {
                     Id = s.Id,
                     BookingRefId = s.BookingRefId,
                     BookingDate = s.BookingDate,
                     TotalPrice = s.RequiredAmount,
-                    BookingCurrency = s.BookingCurrency
-                }).ToListAsync();
-            foreach (var booking in bookings)
+                    BookingCurrency = s.BookingCurrency,
+                    CreatedOn = s.CreatedOn,
+                    LastModifiedOn = s.LastModifiedOn
+                });
+            foreach (var booking in query)
             {
                 booking.FilmName = GetFilmNameByBooking(booking.Id);
                 booking.CinemaName = GetCinemaNameByBooking(booking.Id);
             }
 
+            var data = query.OrderBy(request.OrderBy);
+
             if (request.Keyword != null)
                 request.Keyword = request.Keyword.Trim();
 
-            List<GetCustomerBookingResponse> result = bookings.Where(x => string.IsNullOrEmpty(request.Keyword)
+            var bookings = data.Where(x => string.IsNullOrEmpty(request.Keyword)
                                 || StringHelper.Contains(x.FilmName, request.Keyword)
-                                || StringHelper.Contains(x.CinemaName, request.Keyword)).OrderBy(x =>x.BookingDate).ToList();
+                                || StringHelper.Contains(x.CinemaName, request.Keyword)).ToList();
 
-            var totalRecord = result.Count();
-
+            var totalRecord = bookings.Count();
+            List<GetCustomerBookingResponse> result;
             if (!request.IsExport)
-                result = result.Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize).ToList();
+                result = bookings.Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize).ToList();
+            else
+                result = bookings;
 
             return PaginatedResult<GetCustomerBookingResponse>.Success(result, totalRecord, request.PageNumber, request.PageSize);
         }

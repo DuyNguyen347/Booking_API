@@ -137,6 +137,11 @@ namespace WebApi.Controllers.V1.Booking
             var result = await Mediator.Send(new GetCustomerBookingQuery
             {
                 CustomerId = query.CustomerId,
+                Keyword = query.Keyword,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize,
+                IsExport = query.IsExport,
+                OrderBy = query.OrderBy,
             });
             return result.Succeeded? Ok(result): BadRequest(result);
         }
