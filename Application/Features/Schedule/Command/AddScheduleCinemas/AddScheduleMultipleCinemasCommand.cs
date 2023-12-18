@@ -69,7 +69,9 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
             foreach (var CinemaId in request.ListCinemaId)
             {
                 var CinemaRooms = await (from room in _roomRepository.Entities
-                                         where room.CinemaId == CinemaId && room.Status == Domain.Constants.Enum.SeatStatus.Available
+                                         where room.CinemaId == CinemaId 
+                                         && room.Status == Domain.Constants.Enum.SeatStatus.Available
+                                         && !room.IsDeleted
                                          select room).ToListAsync();
                 if (CinemaRooms.Count == 0)
                     UnaddableCinemas[CinemaId] = -1;
