@@ -18,7 +18,6 @@ namespace Application.Features.SeatReservation.Command.UnlockCommand
 {
     public class UnlockSeatReservationCommand: IRequest<Result<UnlockSeatReservationCommand>>
     {
-        public long CustomerId { get; set; }
         public long ScheduleId { get; set; }
         public List<int> NumberSeats { get; set; }
     }
@@ -45,14 +44,12 @@ namespace Application.Features.SeatReservation.Command.UnlockCommand
         public async Task<Result<UnlockSeatReservationCommand>> Handle(UnlockSeatReservationCommand request, CancellationToken cancellationToken)
         {
             long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
-            if (userId != request.CustomerId)
-                return await Result<UnlockSeatReservationCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
 
-            var existCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
+            var existCustomer = await _customerRepository.FindAsync(x => x.Id == userId && !x.IsDeleted);
             if (existCustomer == null) return await Result<UnlockSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<UnlockSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
-            _seatReservationService.UnlockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
+            _seatReservationService.UnlockSeats(userId, request.ScheduleId, request.NumberSeats);
             return Result<UnlockSeatReservationCommand>.Success(request, "UNLOCKED_SUCCESSFULLY");
         }
     }

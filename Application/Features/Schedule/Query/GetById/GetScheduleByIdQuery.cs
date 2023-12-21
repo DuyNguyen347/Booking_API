@@ -97,7 +97,7 @@ namespace Application.Features.Schedule.Query.GetById
                                         equals new { ticket.BookingId, ticket.IsDeleted }
                                      select ticket.NumberSeat).ToHashSet();
             List<GetScheduleByIdSeatResponse> scheduleSeats = await _seatRepository.Entities
-                .Where(x => x.RoomId == schedule.RoomId)
+                .Where(x => x.RoomId == schedule.RoomId && !x.IsDeleted)
                 .Select(x => new GetScheduleByIdSeatResponse
                 {
                     Id = x.Id,
