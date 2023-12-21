@@ -24,7 +24,6 @@ namespace Application.Features.SeatReservation.Command.AddCommand
 {
     public class AddSeatReservationCommand : IRequest<Result<AddSeatReservationCommand>>
     {
-        public long CustomerId { get; set; }
         public long ScheduleId { get; set; }
         public List<int> NumberSeats { get; set; }
     }
@@ -69,24 +68,22 @@ namespace Application.Features.SeatReservation.Command.AddCommand
         public async Task<Result<AddSeatReservationCommand>> Handle(AddSeatReservationCommand request, CancellationToken cancellationToken)
         {
             long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
-            if (userId != request.CustomerId)
-                return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
-
-            var existCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
+ 
+            var existCustomer = await _customerRepository.FindAsync(x => x.Id == userId && !x.IsDeleted);
             if (existCustomer == null) return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
 
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<AddSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
             
-            var existSeats = await (from schedule in _scheduleRepository.Entities
+            var existSeats = (from schedule in _scheduleRepository.Entities
                                     where !schedule.IsDeleted && schedule.Id == request.ScheduleId
                                     join room in _roomRepository.Entities
                                     on new { Id = schedule.RoomId, IsDeleted = false } equals new { room.Id, room.IsDeleted }
                                     join seat in _seatRepository.Entities
                                     on new { RoomId = room.Id, IsDeleted = false } equals new { seat.RoomId, seat.IsDeleted }
                                     where request.NumberSeats.Contains(seat.NumberSeat)
-                                    select seat.NumberSeat).ToListAsync();
-            if (existSeats.Count < request.NumberSeats.Count)
+                                    select seat.NumberSeat).Count();
+            if (existSeats < request.NumberSeats.Count || request.NumberSeats.Count == 0)
                 return Result<AddSeatReservationCommand>.Fail("NUMBERSEATS_NOT_EXIST");
 
             var existTickets = await (from booking in _bookingRepository.Entities
@@ -104,7 +101,7 @@ namespace Application.Features.SeatReservation.Command.AddCommand
             }
             
 
-            bool IsSuccess = _seatReservationService.LockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
+            bool IsSuccess = _seatReservationService.LockSeats(userId, request.ScheduleId, request.NumberSeats);
             if (!IsSuccess)
                 return Result<AddSeatReservationCommand>.Fail("SEATS_UNAVAILABLE_TEMPORARILY");
             return Result<AddSeatReservationCommand>.Success(request, "RESERVED_SUCCESSFULLY");

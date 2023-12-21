@@ -1,14 +1,9 @@
-﻿using Application.Features.Category.Queries.GetAll;
-using Application.Features.Film.Queries.GetAll;
-using Application.Features.Schedule.Query.GetAll.GetAllByCinema;
-using Application.Interfaces.Category;
+﻿using Application.Features.Schedule.Query.GetAll.GetAllByCinema;
 using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
 using Application.Interfaces.Services;
-using Domain.Entities.Films;
-using Domain.Entities.Schedule;
 using Domain.Wrappers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -52,11 +47,11 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
                                    where !cinema.IsDeleted && !room.IsDeleted && !schedule.IsDeleted
                                    select new
                                    {
-                                       schedule = schedule,
+                                       scheduleInfo = schedule,
                                        cinemId = cinema.Id,
                                        city = cinema.City
                                    }).ToListAsync();
-            var availableToBookTime = _timeZoneService.GetGMT7Time().AddMinutes(30);
+            var availableToBookTime = _timeZoneService.GetGMT7Time().AddMinutes(15);
             foreach (var schedule in schedules)
             {
                 if (!scheduleData.ContainsKey(schedule.city))
@@ -67,14 +62,14 @@ namespace Application.Features.Schedule.Query.GetAll.GetAll
                 {
                     scheduleData[schedule.city][schedule.cinemId] = new List<GetAllScheduleByFilmResponse>();
                 }
-                if (schedule.schedule.StartTime > availableToBookTime)
+                if (schedule.scheduleInfo.StartTime > availableToBookTime && _scheduleRepository.IsBookableSchedule(schedule.scheduleInfo.Id))
                 {
                     scheduleData[schedule.city][schedule.cinemId].Add(new GetAllScheduleByFilmResponse
                     {
-                        Id = schedule.schedule.Id,
-                        StartTime = schedule.schedule.StartTime,
-                        EndTime = schedule.schedule.StartTime.AddMinutes(existFilm.Duration),
-                        Price = schedule.schedule.Price,
+                        Id = schedule.scheduleInfo.Id,
+                        StartTime = schedule.scheduleInfo.StartTime,
+                        EndTime = schedule.scheduleInfo.StartTime.AddMinutes(existFilm.Duration),
+                        Price = schedule.scheduleInfo.Price,
                     });
                 }
             };

@@ -9,6 +9,7 @@ using Application.Features.Schedule.Query.GetById;
 using Domain.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Domain.Constants;
 
 namespace WebApi.Controllers.V1.Schedule
 {
@@ -52,7 +53,7 @@ namespace WebApi.Controllers.V1.Schedule
             }));
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpPost]
         public async Task<IActionResult> AddSchedule(AddScheduleCommand command)
         {
@@ -60,7 +61,7 @@ namespace WebApi.Controllers.V1.Schedule
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpPut]
         public async Task<IActionResult> EditSchedule(EditScheduleCommand command)
         {
@@ -68,7 +69,7 @@ namespace WebApi.Controllers.V1.Schedule
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpDelete]
         public async Task<IActionResult> DeleteSchedule(long Id)
         {
@@ -79,7 +80,7 @@ namespace WebApi.Controllers.V1.Schedule
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpPost("cinemas")]
         public async Task<ActionResult<Result<AddScheduleMultipleCinemasResponse>>> AddScheduleCinemas (AddScheduleMultipleCinemasCommand command)
         {

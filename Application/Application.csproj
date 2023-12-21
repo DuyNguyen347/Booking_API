@@ -30,6 +30,8 @@
 		<PackageReference Include="QRCoder" Version="1.4.1" />
 	</ItemGroup>
 	<ItemGroup>
+	  <Folder Include="Features\Booking\Queries\GetAll\GetAllCustomerBooking\" />
+	  <Folder Include="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\" />
 	  <Folder Include="Features\PaymentDestination\" />
 	</ItemGroup>
 </Project>

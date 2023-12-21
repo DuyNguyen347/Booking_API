@@ -23,8 +23,7 @@ namespace WebApi.Controllers.V1.Booking
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        //[Authorize(Roles = RoleConstants.AdministratorRole)]
-        [Authorize]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<GetAllBookingResponse>>> GetAllBookings([FromQuery] GetAllBookingQuery query)
         {
@@ -129,14 +128,12 @@ namespace WebApi.Controllers.V1.Booking
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        //[Authorize(Roles = RoleConstants.CustomerRole)]
-        [Authorize]
+        [Authorize(Roles = RoleConstants.CustomerRole)]
         [HttpGet("customer")]
         public async Task<IActionResult> GetCustomerBooking([FromQuery] GetCustomerBookingQuery query)
         {
             var result = await Mediator.Send(new GetCustomerBookingQuery
             {
-                CustomerId = query.CustomerId,
                 Keyword = query.Keyword,
                 PageNumber = query.PageNumber,
                 PageSize = query.PageSize,

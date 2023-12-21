@@ -1,8 +1,10 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Booking;
 using Application.Interfaces.Customer;
+using Application.Interfaces.Schedule;
 using Application.Parameters;
 using Domain.Constants;
+using Domain.Entities.Customer;
 using Domain.Helpers;
 using Domain.Wrappers;
 using MediatR;
@@ -19,15 +21,18 @@ namespace Application.Features.Booking.Queries.GetAll
         private readonly IBookingRepository _bookingRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IEnumService _enumService;
+        private readonly IScheduleRepository _scheduleRepository;
 
         public GetAllBookingHandler(
             IBookingRepository bookingRepository, 
             ICustomerRepository customerRepository,
-            IEnumService enumService)
+            IEnumService enumService,
+            IScheduleRepository scheduleRepository)
         {
             _bookingRepository = bookingRepository;
             _customerRepository = customerRepository;
             _enumService = enumService;
+            _scheduleRepository = scheduleRepository;
         }
 
         public async Task<PaginatedResult<GetAllBookingResponse>> Handle(GetAllBookingQuery request, CancellationToken cancellationToken)
@@ -46,13 +51,22 @@ namespace Application.Features.Booking.Queries.GetAll
                         select new GetAllBookingResponse
                         {
                             Id = booking.Id,
+                            BookingRefId = booking.BookingRefId,
                             CustomerName = customer.CustomerName,
                             PhoneNumber = customer.PhoneNumber,
                             TotalPrice = booking.RequiredAmount,
-                            BookingDate = booking.BookingDate
+                            BookingDate = booking.BookingDate,
+                            FilmName = _scheduleRepository.GetFilmName(booking.ScheduleId),
+                            CinemaName = _scheduleRepository.GetCinemaName(booking.ScheduleId),
+                            CreatedOn = booking.CreatedOn,
+                            LastModifiedOn = booking.LastModifiedOn,
                         };
 
-            var data = query.AsQueryable().OrderBy(request.OrderBy);
+            var data = query.AsQueryable()
+                .Where(x => string.IsNullOrEmpty(request.Keyword)
+                                || StringHelper.Contains(x.FilmName, request.Keyword)
+                                || StringHelper.Contains(x.CinemaName, request.Keyword))
+                .OrderBy(request.OrderBy);
             var totalRecord = data.Count();
             List<GetAllBookingResponse> result;
 
