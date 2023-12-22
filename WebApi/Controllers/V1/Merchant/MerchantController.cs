@@ -78,9 +78,9 @@ namespace WebApi.Controllers.V1.Merchant
             //AsciiQRCode qrCode = new AsciiQRCode(qrCodeData);
             //string qrCodeAsAsciiArt = qrCode.GetGraphic(1);
 
-            QRCode qrCode = new QRCode(qrCodeData);
-            Bitmap qrCodeImage = qrCode.GetGraphic(20);
-            return Ok(qrCodeImage);
+            //QRCode qrCode = new QRCode(qrCodeData);
+            //Bitmap qrCodeImage = qrCode.GetGraphic(20);
+            return Ok();
         }
     }
 }
