@@ -13,6 +13,7 @@ namespace Application.Features.Schedule.Command
         public string? Description { get; set; }
         public DateTime StartTime { get; set; }
         public long FilmId { get; set; }
+        public string? FilmName {  get; set; }
         public long RoomId { get; set; }
         public int Price { get; set; }
     }

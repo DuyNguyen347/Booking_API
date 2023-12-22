@@ -10,9 +10,9 @@ using Domain.Wrappers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.Features.Schedule.Command.AddScheduleCinemas
+namespace Application.Features.Schedule.Command.AddScheduleMultiCinemas
 {
-    public class AddScheduleMultipleCinemasCommand: IRequest<Result<AddScheduleMultipleCinemasResponse>>
+    public class AddScheduleMultiCinemasCommand: IRequest<Result<AddScheduleMultiCinemasResponse>>
     {
         public long Id { get; set; }
         public int Duration { get; set; }
@@ -22,7 +22,7 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
         public int Price { get; set; }
         public string? Description { get; set; }
     }
-    internal class AddScheduleMultipleCinemasCommandHandler: IRequestHandler<AddScheduleMultipleCinemasCommand, Result<AddScheduleMultipleCinemasResponse>>
+    internal class AddScheduleMultiCinemasCommandHandler: IRequestHandler<AddScheduleMultiCinemasCommand, Result<AddScheduleMultiCinemasResponse>>
     {
         private readonly IMapper _mapper;
         private readonly IScheduleRepository _scheduleRepository;
@@ -31,7 +31,7 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
         private readonly IRoomRepository _roomRepository;
         private readonly IUnitOfWork<long> _unitOfWork;
         private readonly ITimeZoneService _timeZoneService;
-        public AddScheduleMultipleCinemasCommandHandler(
+        public AddScheduleMultiCinemasCommandHandler(
             IMapper mapper,
             IScheduleRepository scheduleRepository,
             IFilmRepository filmRepository,
@@ -49,13 +49,13 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
             _unitOfWork = unitOfWork;
             _timeZoneService = timeZoneService;
         }
-        public async Task<Result<AddScheduleMultipleCinemasResponse>> Handle(AddScheduleMultipleCinemasCommand request, CancellationToken cancellationToken)
+        public async Task<Result<AddScheduleMultiCinemasResponse>> Handle(AddScheduleMultiCinemasCommand request, CancellationToken cancellationToken)
         {
             var existFilm = await _filmRepository.FindAsync(x => x.Id == request.FilmId && !x.IsDeleted);         
-            if (existFilm == null) return await Result<AddScheduleMultipleCinemasResponse>.FailAsync("NOT_FOUND_FILM");
-            if (request.Duration < existFilm.Duration) return await Result<AddScheduleMultipleCinemasResponse>.FailAsync($"DURATION_SHORTER_THAN_FILM_DURATION({existFilm.Duration})");
-            if (request.StartTime < _timeZoneService.GetGMT7Time().AddMinutes(30)) return await Result<AddScheduleMultipleCinemasResponse>.FailAsync("NOT_VALID_TIME");
-            AddScheduleMultipleCinemasResponse response = new AddScheduleMultipleCinemasResponse()
+            if (existFilm == null) return await Result<AddScheduleMultiCinemasResponse>.FailAsync("NOT_FOUND_FILM");
+            if (request.Duration < existFilm.Duration) return await Result<AddScheduleMultiCinemasResponse>.FailAsync($"DURATION_SHORTER_THAN_FILM_DURATION({existFilm.Duration})");
+            if (request.StartTime < _timeZoneService.GetGMT7Time().AddMinutes(30)) return await Result<AddScheduleMultiCinemasResponse>.FailAsync("NOT_VALID_TIME");
+            AddScheduleMultiCinemasResponse response = new AddScheduleMultiCinemasResponse()
             {
                 Duration = request.Duration,
                 StartTime = request.StartTime,
@@ -101,7 +101,7 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
                         CinemaName = _cinemaRepository.Entities.First(x => x.Id == cinema).Name,
                     });
                 }
-                return await Result<AddScheduleMultipleCinemasResponse>.FailAsync(response, "There are cinemas with no rooms (roomId: -1) or rooms with showings scheduled (roomId: 0)");
+                return await Result<AddScheduleMultiCinemasResponse>.FailAsync(response, "There are cinemas with no rooms (roomId: -1) or rooms with showings scheduled (roomId: 0)");
             }
             foreach (var (cinema, room) in AddableCinemas)
             {
@@ -124,7 +124,7 @@ namespace Application.Features.Schedule.Command.AddScheduleCinemas
                     CinemaName = _cinemaRepository.Entities.First(x => x.Id == cinema).Name,
                 });
             }
-            return await Result<AddScheduleMultipleCinemasResponse>.SuccessAsync(response);
+            return await Result<AddScheduleMultiCinemasResponse>.SuccessAsync(response);
         }
     }
 }

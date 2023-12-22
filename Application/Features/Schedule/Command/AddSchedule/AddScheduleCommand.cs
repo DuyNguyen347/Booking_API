@@ -53,7 +53,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
             if (existRoom.Status != Domain.Constants.Enum.SeatStatus.Available) return await Result<List<ScheduleCommandResponse>>.FailAsync("ROOM_IS_NOT_AVAILABLE");
             if (request.Duration < existFilm.Duration) return await Result<List<ScheduleCommandResponse>>.FailAsync($"DURATION_SHORTER_THAN_FILM_DURATION({existFilm.Duration})");
             if (request.StartTime < _timeZoneService.GetGMT7Time().AddMinutes(30)) return await Result<List<ScheduleCommandResponse>>.FailAsync("NOT_VALID_TIME");
-            List <ScheduleCommandResponse> listConflictSchedule = await IsScheduleConflict(request);
+            List <ScheduleCommandResponse> listConflictSchedule = await GetListConflictExistingSchedule(request);
             if (listConflictSchedule.Count == 0)
             {
                 var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -75,6 +75,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
                             Description = request.Description,
                             StartTime = request.StartTime,
                             FilmId = request.FilmId,
+                            FilmName = _scheduleRepository.GetFilmName(request.FilmId),
                             RoomId = request.RoomId,
                             Price = request.Price
                         }
@@ -93,7 +94,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
             }
             return await Result<List<ScheduleCommandResponse>>.FailAsync(listConflictSchedule, "CONFLICT_WITH_EXISTING_SCHEDULE");
         }
-        public async Task<List<ScheduleCommandResponse>> IsScheduleConflict(AddScheduleCommand request)
+        public async Task<List<ScheduleCommandResponse>> GetListConflictExistingSchedule(AddScheduleCommand request)
         {
             var listConflictSchedule = await _scheduleRepository.Entities.Where(x => request.RoomId == x.RoomId && !x.IsDeleted).
                 Where(x => (x.StartTime <= request.StartTime && request.StartTime < x.StartTime.AddMinutes(x.Duration)) ||
@@ -108,6 +109,7 @@ namespace Application.Features.Schedule.Command.AddSchedule
                     RoomId = x.RoomId,
                     Price = x.Price
                 }).ToListAsync();
+            listConflictSchedule.ForEach(_ => _.FilmName = _scheduleRepository.GetFilmName(_.Id));
             return listConflictSchedule;
         }
     }
