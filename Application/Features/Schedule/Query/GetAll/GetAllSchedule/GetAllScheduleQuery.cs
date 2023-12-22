@@ -50,7 +50,9 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
         public async Task<Result<List<GetAllScheduleResponse>>> Handle(GetAllScheduleQuery request, CancellationToken cancellationToken)
         {
             var availableToBookTime = _timeZoneService.GetGMT7Time().AddMinutes(15);
+
             var result = new List<GetAllScheduleResponse>();
+
             var query = (from cinema in _cinemaRepository.Entities 
                          where !cinema.IsDeleted && (request.CinemaId == null || cinema.Id == request.CinemaId)
                          join room in _roomRepository.Entities
@@ -100,7 +102,7 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
                         StartDate = filmGroup.First().filmInfo.StartDate,
                         EndDate = filmGroup.First().filmInfo.EndDate,
                         Trailer = filmGroup.First().filmInfo.Trailer,
-                        Image = _uploadService.GetFullUrl(_filmImageRepository.Entities.Where(_ => !_.IsDeleted && _.FilmId == filmGroup.First().filmInfo.Id).Select(y => y.NameFile).FirstOrDefault()),
+                        Image = _filmRepository.GetImage(filmGroup.First().filmInfo.Id),
                         NumberOfVotes = _reviewRepository.GetFilmNumberOfReviews(filmGroup.First().filmInfo.Id),
                         Score = _reviewRepository.GetFilmReviewScore(filmGroup.First().filmInfo.Id),
                         Schedules = new List<GetAllScheduleScheduleResponse>()
@@ -120,7 +122,8 @@ namespace Application.Features.Schedule.Query.GetAll.GetAllSchedule
                             });
                         }
                     }
-                    cinema.Films.Add(film);
+                    if (film.Schedules.Count() > 0) 
+                        cinema.Films.Add(film);
                 }
                 result.Add(cinema);
             }

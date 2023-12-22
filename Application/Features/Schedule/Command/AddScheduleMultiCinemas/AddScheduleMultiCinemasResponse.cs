@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.Schedule.Command.AddScheduleCinemas
+namespace Application.Features.Schedule.Command.AddScheduleMultiCinemas
 {
-    public class AddScheduleMultipleCinemasResponse
+    public class AddScheduleMultiCinemasResponse
     {
         public DateTime StartTime { get; set; }
         public int Duration { get; set; }

@@ -30,5 +30,13 @@ namespace Infrastructure.Repositories.Booking
             .FirstOrDefault(); ;
             return (totalMoney != null) ? totalMoney.TotalMoney : 0;
         }
+        public int GetBookingNumberOfTickets(long id)
+        {
+            var numberOfTickets = _dbContext.Bookings.Where(booking => !booking.IsDeleted && booking.Id == id)
+                .Join(_dbContext.Tickets.Where(ticket => !ticket.IsDeleted),
+                booking => booking.Id, ticket => ticket.BookingId,
+                (booking, ticket) => ticket).Count();
+            return numberOfTickets;
+        }
     }
 }
