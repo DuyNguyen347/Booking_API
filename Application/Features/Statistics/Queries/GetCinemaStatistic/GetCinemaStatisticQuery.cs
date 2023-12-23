@@ -1,11 +1,8 @@
-﻿using Application.Interfaces;
-using Application.Interfaces.Booking;
+﻿using Application.Interfaces.Booking;
 using Application.Interfaces.Cinema;
 using Application.Interfaces.Room;
 using Application.Interfaces.Schedule;
-using Application.Interfaces.Services;
 using Application.Parameters;
-using Domain.Constants;
 using Domain.Constants.Enum;
 using Domain.Helpers;
 using Domain.Wrappers;
@@ -27,75 +24,26 @@ namespace Application.Features.Statistics.Queries.GetCinemaStatistic
         private readonly IRoomRepository _roomRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly IScheduleRepository _scheduleRepository;
-        private readonly ITimeZoneService _timeZoneService;
-        private readonly IEnumService _enumService;
 
         public GetCinemaStatisticQueryHandler(
             ICinemaRepository cinemaRepository,
             IRoomRepository roomRepository,
             IBookingRepository bookingRepository,
-            IScheduleRepository scheduleRepository,
-            ITimeZoneService timeZoneService,
-            IEnumService enumService)
+            IScheduleRepository scheduleRepository)
         {
             _cinemaRepository = cinemaRepository;
             _roomRepository = roomRepository;
             _bookingRepository = bookingRepository;
             _scheduleRepository = scheduleRepository;
-            _timeZoneService = timeZoneService;
-            _enumService = enumService;
         }
 
         public async Task<PaginatedResult<GetCinemaStatisticResponse>> Handle(GetCinemaStatisticQuery request, CancellationToken cancellationToken)
         {
             var cinemaStatistics = new List<GetCinemaStatisticResponse>();
-            DateTime currentDate = _timeZoneService.GetGMT7Time();
-            IEnumerable<Domain.Entities.Booking.Booking> bookings;
 
-            if (request.TimeOption == StatisticsTimeOption.Today)
-            {
-                bookings = _bookingRepository.Entities
-                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date == currentDate.Date
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
-                    .AsQueryable();
-            }
-            else if (request.TimeOption == StatisticsTimeOption.ThisWeek)
-            {
-                DateTime firstDateOfThisWeek = currentDate.AddDays((int)currentDate.DayOfWeek == 0 ? -7 : -(int)currentDate.DayOfWeek);
-                bookings = _bookingRepository.Entities
-                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date > firstDateOfThisWeek.Date
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
-                    .AsQueryable();
-            }
-            else if (request.TimeOption == StatisticsTimeOption.ThisMonth)
-            {
-                DateTime firstDayOfThisMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
-                bookings = _bookingRepository.Entities
-                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date >= firstDayOfThisMonth.Date
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
-                    .AsQueryable();
-            }
-            else if (request.TimeOption == StatisticsTimeOption.ThisYear)
-            {
-                DateTime firstDayOfThisYear = new DateTime(currentDate.Year, 1, 1);
-                bookings = _bookingRepository.Entities
-                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date >= firstDayOfThisYear.Date
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
-                    .AsQueryable();
-            }
-            else
-            {
-                DateTime ToTime = request.ToTime.HasValue ? request.ToTime.Value : currentDate;
-                bookings = _bookingRepository.Entities
-                .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                && (request.FromTime.HasValue && x.BookingDate.Value.Date >= request.FromTime.Value.Date && x.BookingDate.Value.Date <= ToTime.Date)
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
-                    .AsQueryable();
-            }
+            var bookings = _bookingRepository
+                .GetBookingsByTimeChoice(request.TimeOption, request.FromTime, request.ToTime)
+                .AsQueryable();
 
             //Thuc hien loc ket qua
             var query = (from cinema in _cinemaRepository.Entities
@@ -132,7 +80,7 @@ namespace Application.Features.Statistics.Queries.GetCinemaStatistic
                     Address = cinemaBooking.First().cinemaInfo.Address
                 };
 
-                decimal revenue = 0;
+                decimal revenue = 0m;
                 int numberOfTickets = 0;
                 foreach (var booking in cinemaBooking)
                 {

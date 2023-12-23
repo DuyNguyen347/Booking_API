@@ -1,18 +1,7 @@
-﻿using Application.Features.Schedule.Query.GetById;
-using Application.Interfaces.Schedule;
-using Domain.Constants.Enum;
+﻿using Application.Interfaces.Schedule;
 using Domain.Constants;
-using Domain.Entities.Schedule;
 using Infrastructure.Contexts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Application.Interfaces.Services;
-using Application.Interfaces.Booking;
-using Infrastructure.Repositories.Booking;
-using Infrastructure.Services;
 using Application.Interfaces;
 
 namespace Infrastructure.Repositories.Schedule

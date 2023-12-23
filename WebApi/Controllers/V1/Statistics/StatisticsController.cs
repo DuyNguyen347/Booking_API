@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Domain.Constants;
 using Application.Features.Statistics.Queries.GetFilmStatistic;
 using Application.Features.Statistics.Queries.GetCinemaStatistic;
+using Application.Features.Statistics.Queries.GetDaytimeRangesStatistic;
 
 namespace WebApi.Controllers.V1.Statistics
 {
@@ -100,6 +101,19 @@ namespace WebApi.Controllers.V1.Statistics
                 PageSize = query.PageSize,
                 Keyword = query.Keyword,
                 OrderBy = query.OrderBy,
+            }));
+        }
+
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpGet("daytime-ranges")]
+        public async Task<ActionResult<Result<List<GetDaytimeRangesStatisticResponse>>>> GetDaytimeRangesStatistic([FromQuery] GetDaytimeRangesStatisticQuery query)
+        {
+            return Ok(await Mediator.Send(new GetDaytimeRangesStatisticQuery
+            {
+                TimeOption = query.TimeOption,
+                FromTime = query.FromTime,
+                ToTime = query.ToTime,
+                OrderBy = query.OrderBy
             }));
         }
     }
