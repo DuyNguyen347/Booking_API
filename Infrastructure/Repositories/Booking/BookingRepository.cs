@@ -2,6 +2,8 @@
 using Infrastructure.Contexts;
 using Domain.Constants;
 using Application.Interfaces;
+using Domain.Constants.Enum;
+using Application.Interfaces.Services;
 
 namespace Infrastructure.Repositories.Booking
 {
@@ -9,11 +11,16 @@ namespace Infrastructure.Repositories.Booking
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly IEnumService _enumService;
+        private readonly ITimeZoneService _timeZoneService;
 
-        public BookingRepository(ApplicationDbContext dbContext, IEnumService enumService) : base(dbContext)
+        public BookingRepository(
+            ApplicationDbContext dbContext, 
+            IEnumService enumService,
+            ITimeZoneService timeZoneService) : base(dbContext)
         {
             _dbContext = dbContext;
             _enumService = enumService;
+            _timeZoneService = timeZoneService;
         }
 
         public decimal GetAllTotalMoneyBookingByCustomerId(long id)
@@ -37,6 +44,54 @@ namespace Infrastructure.Repositories.Booking
                 booking => booking.Id, ticket => ticket.BookingId,
                 (booking, ticket) => ticket).Count();
             return numberOfTickets;
+        }
+
+        public IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByTimeChoice(StatisticsTimeOption TimeOption, DateTime? FromTime, DateTime? ToTime)
+        {
+            IEnumerable<Domain.Entities.Booking.Booking> bookings;
+
+            DateTime currentDate = _timeZoneService.GetGMT7Time();
+
+            if (TimeOption == StatisticsTimeOption.Today)
+            {
+                bookings = _dbContext.Bookings
+                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
+                    && x.BookingDate.Value.Date == currentDate.Date
+                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+            }
+            else if ( TimeOption == StatisticsTimeOption.ThisWeek)
+            {
+                DateTime firstDateOfThisWeek = currentDate.AddDays((int)currentDate.DayOfWeek == 0 ? -7 : -(int)currentDate.DayOfWeek);
+                bookings = _dbContext.Bookings
+                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
+                    && x.BookingDate.Value.Date > firstDateOfThisWeek.Date
+                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+            }
+            else if ( TimeOption == StatisticsTimeOption.ThisMonth)
+            {
+                DateTime firstDayOfThisMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
+                bookings = _dbContext.Bookings
+                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
+                    && x.BookingDate.Value.Date >= firstDayOfThisMonth.Date
+                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+            }
+            else if ( TimeOption == StatisticsTimeOption.ThisYear)
+            {
+                DateTime firstDayOfThisYear = new DateTime(currentDate.Year, 1, 1);
+                bookings = _dbContext.Bookings
+                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
+                    && x.BookingDate.Value.Date >= firstDayOfThisYear.Date
+                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+            }
+            else
+            {
+                DateTime toTime =  ToTime.HasValue ?  ToTime.Value : currentDate;
+                bookings = _dbContext.Bookings
+                .Where(x => !x.IsDeleted && x.BookingDate.HasValue
+                && (FromTime.HasValue && x.BookingDate.Value.Date >= FromTime.Value.Date && x.BookingDate.Value.Date <= toTime.Date)
+                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+            }
+            return bookings;
         }
     }
 }

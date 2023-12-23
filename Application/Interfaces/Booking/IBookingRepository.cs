@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
+using Domain.Constants.Enum;
 
 namespace Application.Interfaces.Booking
 {
@@ -6,5 +7,6 @@ namespace Application.Interfaces.Booking
     {
         decimal GetAllTotalMoneyBookingByCustomerId(long id);
         int GetBookingNumberOfTickets(long id);
+        IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByTimeChoice(StatisticsTimeOption timeOption, DateTime? FromTime, DateTime? ToTime);
     }
 }

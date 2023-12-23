@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Application.Features.Statistics.Queries.GetCinemaStatistic
+﻿namespace Application.Features.Statistics.Queries.GetCinemaStatistic
 {
     public class GetCinemaStatisticResponse
     {
