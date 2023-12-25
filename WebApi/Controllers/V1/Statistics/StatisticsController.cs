@@ -80,13 +80,15 @@ namespace WebApi.Controllers.V1.Statistics
         [HttpGet("time-step")]
         public async Task<ActionResult<PaginatedResult<GetStatisticByTimeStepResponse>>> GetStatisticByTimeStep([FromQuery] GetStatisticByTimeStepQuery query)
         {
-            return Ok(await Mediator.Send(new GetStatisticByTimeStepQuery
+            var result = await Mediator.Send(new GetStatisticByTimeStepQuery
             {
                 TimeStep = query.TimeStep,
                 IsExport = query.IsExport,
                 PageNumber = query.PageNumber,
-                PageSize = query.PageSize
-            }));
+                PageSize = query.PageSize,
+                CinemaId = query.CinemaId,
+            });
+            return result.Succeeded ? Ok(result) : BadRequest(result);
         }
     }
 }

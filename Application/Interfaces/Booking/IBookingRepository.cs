@@ -8,5 +8,6 @@ namespace Application.Interfaces.Booking
         decimal GetAllTotalMoneyBookingByCustomerId(long id);
         int GetBookingNumberOfTickets(long id);
         IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByTimeChoice(StatisticsTimeOption timeOption, DateTime? FromTime, DateTime? ToTime);
+        IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByCinema(long CinemaId);
     }
 }

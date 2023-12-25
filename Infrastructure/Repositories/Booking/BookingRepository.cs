@@ -93,5 +93,24 @@ namespace Infrastructure.Repositories.Booking
             }
             return bookings;
         }
+        
+        public IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByCinema(long CinemaId)
+        {
+            var bookings = _dbContext.Bookings
+                .Where(_ => !_.IsDeleted && _.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
+                .Join(_dbContext.Schedules.Where(_ => !_.IsDeleted),
+                booking => booking.ScheduleId,
+                schedule => schedule.Id,
+                (booking, schedule) => new
+                {
+                    bookingInfo = booking,
+                    roomId = schedule.RoomId
+                })
+                .Join(_dbContext.Room.Where(_ => !_.IsDeleted && (CinemaId == 0 || _.CinemaId == CinemaId)),
+                booking => booking.roomId, 
+                room => room.Id, 
+                (booking, room) => booking.bookingInfo).AsEnumerable();
+            return bookings;
+        }
     }
 }

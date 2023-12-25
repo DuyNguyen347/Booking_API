@@ -1,12 +1,13 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Booking;
+using Application.Interfaces.Cinema;
 using Application.Interfaces.Services;
 using Application.Parameters;
 using Domain.Constants;
 using Domain.Constants.Enum;
-using Domain.Entities.Booking;
 using Domain.Wrappers;
 using MediatR;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
@@ -22,15 +23,18 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
     public class GetStatisticByTimeStepQueryHandler : IRequestHandler<GetStatisticByTimeStepQuery, PaginatedResult<GetStatisticByTimeStepResponse>>
     {
         private readonly IBookingRepository _bookingRepository;
+        private readonly ICinemaRepository _cinemaRepository;
         private readonly IEnumService _enumService;
         private readonly ITimeZoneService _timeZoneService;
 
         public GetStatisticByTimeStepQueryHandler(
             IBookingRepository bookingRepository,
+            ICinemaRepository cinemaRepository,
             IEnumService enumService,
             ITimeZoneService timeZoneService)
         {
             _bookingRepository = bookingRepository;
+            _cinemaRepository = cinemaRepository;
             _enumService = enumService;
             _timeZoneService = timeZoneService;
         }
@@ -38,12 +42,15 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
         {
             List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
 
+            if (request.CinemaId != 0 && !_cinemaRepository.Entities.Any(_ => !_.IsDeleted && _.Id == request.CinemaId))
+                return PaginatedResult<GetStatisticByTimeStepResponse>.Failure(new List<string> { "NOT_FOUND_CINEMA" });
+
             if (request.TimeStep == StatisticTimeStep.Day)
-                statistics = HandleDayStep();
+                statistics = HandleDayStep(request.CinemaId);
             else if (request.TimeStep == StatisticTimeStep.Week)
-                statistics = HandleWeekStep();
+                statistics = HandleWeekStep(request.CinemaId);
             else
-                statistics = HandleMonthStep();
+                statistics = HandleMonthStep(request.CinemaId);
 
             var totalCount = statistics.Count;
 
@@ -55,13 +62,15 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
 
             return PaginatedResult<GetStatisticByTimeStepResponse>.Success(result, totalCount, request.PageNumber, request.PageSize);
         }
-
-        public List<GetStatisticByTimeStepResponse> HandleDayStep()
+        
+        public List<GetStatisticByTimeStepResponse> HandleDayStep(long CinemaId)
         {
             DateTime currentDate = _timeZoneService.GetGMT7Time().Date;
             List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
 
-            var bookingGroups = from booking in _bookingRepository.Entities.AsEnumerable()
+            var cinemaBookings = _bookingRepository.GetBookingsByCinema(CinemaId);
+
+            var bookingGroups = from booking in cinemaBookings
                                 where !booking.IsDeleted
                                 && booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
                                 && booking.BookingDate.HasValue
@@ -97,12 +106,14 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
                           }).ToList();
             return statistics;
         }
-        public List<GetStatisticByTimeStepResponse> HandleWeekStep()
+        public List<GetStatisticByTimeStepResponse> HandleWeekStep(long CinemaId)
         {
             DateTime currentDate = _timeZoneService.GetGMT7Time();
             List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
 
-            var bookingGroups = from booking in _bookingRepository.Entities.AsEnumerable()
+            var cinemaBookings = _bookingRepository.GetBookingsByCinema(CinemaId);
+
+            var bookingGroups = from booking in cinemaBookings
                                 where !booking.IsDeleted
                                 && booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
                                 && booking.BookingDate.HasValue
@@ -143,13 +154,15 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
                           }).ToList();
             return statistics;
         }
-        public List<GetStatisticByTimeStepResponse> HandleMonthStep()
+        public List<GetStatisticByTimeStepResponse> HandleMonthStep(long CinemaId)
         {
             DateTime currentDate = _timeZoneService.GetGMT7Time();
             List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
 
-            var bookingGroups = from booking in _bookingRepository.Entities.AsEnumerable()
-                           where !booking.IsDeleted
+            var cinemaBookings = _bookingRepository.GetBookingsByCinema(CinemaId);
+
+            var bookingGroups = from booking in cinemaBookings
+                                where !booking.IsDeleted
                            && booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
                            && booking.BookingDate.HasValue
                            group booking by new
@@ -174,7 +187,6 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
             {
                 allMonths.Add(month);
             }
-            Console.WriteLine(string.Join(", ", allMonths));
             
             statistics = (from month in allMonths.OrderDescending().AsEnumerable()
                           join bookingGroup in bookingGroups
