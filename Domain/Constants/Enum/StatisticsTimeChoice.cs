@@ -13,5 +13,6 @@ namespace Domain.Constants.Enum
         ThisMonth = 2,
         ThisYear = 3,
         CustomTime = 4,
+        AllTime = 5,
     }
 }

@@ -1,142 +1,92 @@
 ﻿using Application.Interfaces.Booking;
-using Application.Interfaces.BookingDetail;
-using Application.Interfaces.Customer;
-using Application.Interfaces.Feedback;
-using Application.Interfaces.Service;
-using Domain.Constants.Enum;
 using Domain.Wrappers;
+using Domain.Constants.Enum;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Application.Interfaces.Schedule;
+using Application.Interfaces.Cinema;
 
 namespace Application.Features.Statistics.Queries.GetOverview
 {
-    public class GetOverviewQuery : IRequest<Result<List<GetOverviewResponse>>>
+    public class GetOverviewQuery : IRequest<Result<GetOverviewResponse>>
     {
-        public StatisticsTime statisticsTime { get; set; }
+        public StatisticsTimeOption TimeOption { get; set; }
+        public DateTime? FromTime { get; set; }
+        public DateTime? ToTime { get; set; }
+        public long CinemaId { get; set; }
     }
-    internal class GetOverviewQueryHandler : IRequestHandler<GetOverviewQuery, Result<List<GetOverviewResponse>>>
+    internal class GetOverviewQueryHandler : IRequestHandler<GetOverviewQuery, Result<GetOverviewResponse>>
     {
-        private readonly ICustomerRepository _customerRepository;
         private readonly IBookingRepository _bookingRepository;
-        private readonly IFeedbackRepository _feedbackRepository;
-        private readonly IBookingDetailRepository _bookingDetailRepository;
-        private readonly IServiceRepository _serviceRepository;
+        private readonly IScheduleRepository _scheduleRepository;
+        private readonly ICinemaRepository _cinemaRepository;
 
-        public GetOverviewQueryHandler(ICustomerRepository customerRepository, IBookingRepository bookingRepository, IFeedbackRepository feedbackRepository, IBookingDetailRepository bookingDetailRepository, IServiceRepository serviceRepository)
+        public GetOverviewQueryHandler(
+            IBookingRepository bookingRepository,
+            IScheduleRepository scheduleRepository,
+            ICinemaRepository cinemaRepository)
         {
-            _customerRepository = customerRepository;
             _bookingRepository = bookingRepository;
-            _feedbackRepository = feedbackRepository;
-            _bookingDetailRepository = bookingDetailRepository;
-            _serviceRepository = serviceRepository;
+            _scheduleRepository = scheduleRepository;
+            _cinemaRepository = cinemaRepository;
         }
 
-        public async Task<Result<List<GetOverviewResponse>>> Handle(GetOverviewQuery request, CancellationToken cancellationToken)
+        public async Task<Result<GetOverviewResponse>> Handle(GetOverviewQuery request, CancellationToken cancellationToken)
         {
-            List<GetOverviewResponse> response = new List<GetOverviewResponse>();
-            if (request.statisticsTime == StatisticsTime.LastDayOrWeek)
+            if (request.CinemaId != 0 && !_cinemaRepository.Entities.Any(_ => !_.IsDeleted && _.Id == request.CinemaId))
+                return Result<GetOverviewResponse>.Fail("NOT_FOUND_CINEMA");
+
+            GetOverviewResponse result = new GetOverviewResponse()
             {
-                DateTime currentDate = DateTime.Now;
-                DateTime firstDayOfLastWeek = currentDate.AddDays(-(int)currentDate.DayOfWeek - 6);
-                for (int i = 0; i < 7; i++)
-                {
-                    DateTime dayOfLastWeek = firstDayOfLastWeek.AddDays(i);
-                    GetOverviewResponse overviewOfDay = new GetOverviewResponse();
-                    overviewOfDay.Revenue = 0m;
-                    var customers = await _customerRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date == dayOfLastWeek.Date);
-                    var feedbacks = await _feedbackRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date == dayOfLastWeek.Date);
-                    var bookings = await _bookingRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date == dayOfLastWeek.Date);
-                    overviewOfDay.Reach = customers.ToList().Count + feedbacks.ToList().Count + bookings.ToList().Count;
-                    foreach (var booking in bookings)
-                    {
-                        var bookingDetails = await _bookingDetailRepository.GetByCondition(_ => _.BookingId == booking.Id && _.IsDeleted == false);
-                        foreach (var bookingDetail in bookingDetails)
-                        {
-                            var service = await _serviceRepository.GetByIdAsync(bookingDetail.ServiceId);
-                            if (service != null)
-                            {
-                                overviewOfDay.Revenue += service.Price;
-                            }
-                        }
-                    }
-                    overviewOfDay.Date = dayOfLastWeek;
-                    response.Add(overviewOfDay);
-                }
-            } else if (request.statisticsTime == StatisticsTime.LastMonth)
+                CurrPrdTotalRevenue = 0m,
+                PrevPrdTotalRevenue = 0m,
+                CurrPrdOccupancyRate = 0,
+                PrevPrdOccupancyRate = 0
+            };
+
+            var currPrdBookings = _bookingRepository
+                .GetCurrPrdBookingsByTimeChoice(request.TimeOption, request.FromTime, request.ToTime, request.CinemaId)
+                .AsQueryable();
+            var prevPrdBookings = _bookingRepository
+                .GetPrevPrdBookingsByTimeChoice(request.TimeOption, request.FromTime, request.ToTime, request.CinemaId)
+                .AsQueryable();
+
+            foreach (var booking in currPrdBookings)
             {
-                DateTime currentDate = DateTime.Now;
-                DateTime firstDayOfCurrentMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
-                DateTime firstDayOfLastMonth = firstDayOfCurrentMonth.AddMonths(-1);
-                DateTime lastDayOfLastMonth = new DateTime(currentDate.Year, currentDate.Month, 1).AddDays(-1);
-                DateTime dayOfLastMonth = firstDayOfLastMonth;
-                while (dayOfLastMonth < lastDayOfLastMonth)
-                {
-                    GetOverviewResponse overviewOfDay = await getOverviewInPeriod(dayOfLastMonth,6);
-                    response.Add(overviewOfDay);
-                    dayOfLastMonth = dayOfLastMonth.AddDays(7);
-                }
-                int lastPeriod = lastDayOfLastMonth.Day - dayOfLastMonth.Day;
-                GetOverviewResponse overviewOfLastDay = await getOverviewInPeriod(dayOfLastMonth,lastPeriod);
-                response.Add(overviewOfLastDay);
-            } else
-            {
-                DateTime currentDate = DateTime.Now;
-                int lastYear = currentDate.Year - 1;
-                DateTime firstDayOfLastYear = new DateTime(lastYear, 1, 1);
-                for(int i = 0; i < 12; i++)
-                {
-                    DateTime dayOfYear = firstDayOfLastYear.AddMonths(i);
-                    GetOverviewResponse overviewOfDay = new GetOverviewResponse();
-                    overviewOfDay.Revenue = 0m;
-                    var customers = await _customerRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date >= firstDayOfLastYear.AddMonths(i).Date && _.CreatedOn.Date <= firstDayOfLastYear.AddMonths(i + 1).AddDays(-1));
-                    var feedbacks = await _feedbackRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date >= firstDayOfLastYear.AddMonths(i).Date && _.CreatedOn.Date <= firstDayOfLastYear.AddMonths(i + 1).AddDays(-1));
-                    var bookings = await _bookingRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date >= firstDayOfLastYear.AddMonths(i).Date && _.CreatedOn.Date <= firstDayOfLastYear.AddMonths(i + 1).AddDays(-1));
-                    overviewOfDay.Reach = customers.ToList().Count + feedbacks.ToList().Count + bookings.ToList().Count;
-                    foreach (var booking in bookings)
-                    {
-                        var bookingDetails = await _bookingDetailRepository.GetByCondition(_ => _.BookingId == booking.Id && _.IsDeleted == false);
-                        foreach (var bookingDetail in bookingDetails)
-                        {
-                            var service = await _serviceRepository.GetByIdAsync(bookingDetail.ServiceId);
-                            if (service != null)
-                            {
-                                overviewOfDay.Revenue += service.Price;
-                            }
-                        }
-                    }
-                    overviewOfDay.Date = dayOfYear;
-                    response.Add(overviewOfDay);
-                }
+                result.CurrPrdTotalRevenue += booking.RequiredAmount.HasValue ? booking.RequiredAmount.Value : 0;
+                result.CurrPrdTotalBookings += 1;
+                result.CurrPrdTotalTickets += _bookingRepository.GetBookingNumberOfTickets(booking.Id);
             }
-            return await Result<List<GetOverviewResponse>>.SuccessAsync(response);
-        }
-        private async Task<GetOverviewResponse> getOverviewInPeriod(DateTime firstDateOfWeek, int period)
-        {
-            GetOverviewResponse overviewOfDay = new GetOverviewResponse();
-            overviewOfDay.Revenue = 0m;
-            var customers = await _customerRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date >= firstDateOfWeek.Date && _.CreatedOn.Date <= firstDateOfWeek.AddDays(period).Date);
-            var feedbacks = await _feedbackRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date >= firstDateOfWeek.Date && _.CreatedOn.Date <= firstDateOfWeek.AddDays(period).Date);
-            var bookings = await _bookingRepository.GetByCondition(_ => _.IsDeleted == false && _.CreatedOn.Date >= firstDateOfWeek.Date && _.CreatedOn.Date <= firstDateOfWeek.AddDays(period).Date);
-            overviewOfDay.Reach = customers.ToList().Count + feedbacks.ToList().Count + bookings.ToList().Count;
-            foreach (var booking in bookings)
+            foreach (var booking in prevPrdBookings)
             {
-                var bookingDetails = await _bookingDetailRepository.GetByCondition(_ => _.BookingId == booking.Id && _.IsDeleted == false);
-                foreach (var bookingDetail in bookingDetails)
-                {
-                    var service = await _serviceRepository.GetByIdAsync(bookingDetail.ServiceId);
-                    if (service != null)
-                    {
-                        overviewOfDay.Revenue += service.Price;
-                    }
-                }
+                result.PrevPrdTotalRevenue += booking.RequiredAmount.HasValue ? booking.RequiredAmount.Value : 0;
+                result.PrevPrdTotalBookings += 1;
+                result.PrevPrdTotalTickets += _bookingRepository.GetBookingNumberOfTickets(booking.Id);
             }
-            overviewOfDay.Date = firstDateOfWeek;
-            return overviewOfDay;
+
+            var currPrdScheduleQuery = _scheduleRepository
+                .GetCurrPrdScheduleByTimeOption(request.TimeOption, request.FromTime, request.ToTime, request.CinemaId)
+                .AsQueryable();
+            var prevPrdScheduleQuery = _scheduleRepository
+                .GetPrevPrdScheduleByTimeOption(request.TimeOption, request.FromTime, request.ToTime, request.CinemaId)
+                .AsQueryable();
+
+            foreach (var schedule in currPrdScheduleQuery)
+            {
+                result.CurrPrdSchedules += 1;
+                result.CurrPrdOccupancyRate += _scheduleRepository.GetOccupancyRate(schedule.Id);
+            }
+            foreach (var schedule in prevPrdScheduleQuery)
+            {
+                result.PrevPrdSchedules += 1;
+                result.PrevPrdOccupancyRate += _scheduleRepository.GetOccupancyRate(schedule.Id);
+            }
+
+            if (result.CurrPrdSchedules > 0)
+                result.CurrPrdOccupancyRate /= result.CurrPrdSchedules;
+            if (result.PrevPrdSchedules > 0)
+                result.PrevPrdOccupancyRate /= result.PrevPrdSchedules;
+
+            return await Result<GetOverviewResponse>.SuccessAsync(result);
         }
-    } 
+    }
 }

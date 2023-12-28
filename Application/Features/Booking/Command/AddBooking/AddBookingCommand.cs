@@ -27,7 +27,6 @@ namespace Application.Features.Booking.Command.AddBooking
     public class AddBookingCommand : IRequest<Result<AddBookingCommand>>
     {
         public long Id { get; set; }
-        public long CustomerId { get; set; }
         public long ScheduleId { get; set; }
         public List<int> NumberSeats { get; set; }
         public string? PaymentDestinationId { get; set; } = string.Empty;
@@ -35,7 +34,6 @@ namespace Application.Features.Booking.Command.AddBooking
 
     public class AddBookingCommandHandler : IRequestHandler<AddBookingCommand, Result<AddBookingCommand>>
     {
-        private readonly IMapper _mapper;
         private readonly IBookingRepository _bookingRepository;
         private readonly IScheduleRepository _scheduleRepository;
         private readonly ITicketRepository _ticketRepository;
@@ -43,7 +41,6 @@ namespace Application.Features.Booking.Command.AddBooking
         private readonly ISeatReservationService _seatReservationService;
         private readonly IEnumService _enumService;
         private readonly IUnitOfWork<long> _unitOfWork;
-        private readonly ICustomerRepository _customerRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly UserManager<AppUser> _userManager;
         private readonly IVnPayService _vnPayService;
@@ -51,7 +48,6 @@ namespace Application.Features.Booking.Command.AddBooking
         private readonly ITimeZoneService _timeZoneService;
 
         public AddBookingCommandHandler(
-            IMapper mapper,
             IBookingRepository bookingRepository,
             IScheduleRepository scheduleRepository,
             ITicketRepository ticketRepository,
@@ -59,14 +55,12 @@ namespace Application.Features.Booking.Command.AddBooking
             ISeatReservationService seatReservationService,
             IEnumService enumService,
             IUnitOfWork<long> unitOfWork,
-            ICustomerRepository customerRepository,
             ICurrentUserService currentUserService,
             IVnPayService vnPayService,
             IMerchantRepository merchantRepository,
             ITimeZoneService timeZoneService,
             UserManager<AppUser> userManager)
         {
-            _mapper = mapper;
             _bookingRepository = bookingRepository;
             _scheduleRepository = scheduleRepository;
             _ticketRepository = ticketRepository;
@@ -74,7 +68,6 @@ namespace Application.Features.Booking.Command.AddBooking
             _seatReservationService = seatReservationService;
             _enumService = enumService;
             _unitOfWork = unitOfWork;
-            _customerRepository = customerRepository;
             _currentUserService = currentUserService;
             _userManager = userManager;
             _vnPayService = vnPayService;
@@ -84,26 +77,17 @@ namespace Application.Features.Booking.Command.AddBooking
 
         public async Task<Result<AddBookingCommand>> Handle(AddBookingCommand request, CancellationToken cancellationToken)
         {
-            if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
-            {
-                long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
-
-                if (userId != request.CustomerId)
-                    return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
-            }
-
-            var ExistCustomer = await _customerRepository.FindAsync(x => x.Id == request.CustomerId && !x.IsDeleted);
-            if (ExistCustomer == null) return await Result<AddBookingCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
+            long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
 
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<AddBookingCommand>.FailAsync("NOT_FOUND_SCHEDULE");
 
             foreach (var NumberSeat in request.NumberSeats)
             {
-                if (!_seatReservationService.ValidateLock(request.CustomerId, request.ScheduleId, NumberSeat))
+                if (!_seatReservationService.ValidateLock(userId, request.ScheduleId, NumberSeat))
                     return await Result<AddBookingCommand>.FailAsync("RESERVATION_TIME_OUT");
             }
-            _seatReservationService.UnlockSeats(request.CustomerId, request.ScheduleId, request.NumberSeats);
+            _seatReservationService.UnlockSeats(userId, request.ScheduleId, request.NumberSeats);
 
             var existTickets = await (from booking in _bookingRepository.Entities
                                       where !booking.IsDeleted && booking.ScheduleId == request.ScheduleId
@@ -122,7 +106,7 @@ namespace Application.Features.Booking.Command.AddBooking
             {
                 var booking = new Domain.Entities.Booking.Booking()
                 {
-                    CustomerId = request.CustomerId,
+                    CustomerId = userId,
                     ScheduleId = request.ScheduleId
                 };
                 //Them QR CODE

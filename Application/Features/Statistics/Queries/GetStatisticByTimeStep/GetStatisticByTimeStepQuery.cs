@@ -7,7 +7,6 @@ using Domain.Constants;
 using Domain.Constants.Enum;
 using Domain.Wrappers;
 using MediatR;
-using Org.BouncyCastle.Asn1.Ocsp;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
@@ -49,8 +48,10 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
                 statistics = HandleDayStep(request.CinemaId);
             else if (request.TimeStep == StatisticTimeStep.Week)
                 statistics = HandleWeekStep(request.CinemaId);
-            else
+            else if (request.TimeStep == StatisticTimeStep.Month)
                 statistics = HandleMonthStep(request.CinemaId);
+            else
+                statistics = HandleYearStep(request.CinemaId);
 
             var totalCount = statistics.Count;
 
@@ -62,13 +63,13 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
 
             return PaginatedResult<GetStatisticByTimeStepResponse>.Success(result, totalCount, request.PageNumber, request.PageSize);
         }
-        
+
         public List<GetStatisticByTimeStepResponse> HandleDayStep(long CinemaId)
         {
             DateTime currentDate = _timeZoneService.GetGMT7Time().Date;
             List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
 
-            var cinemaBookings = _bookingRepository.GetBookingsByCinema(CinemaId);
+            var cinemaBookings = _bookingRepository.GetCurrPrdBookingsByTimeChoice(StatisticsTimeOption.AllTime, null, null, CinemaId);
 
             var bookingGroups = from booking in cinemaBookings
                                 where !booking.IsDeleted
@@ -78,7 +79,7 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
                                 orderby bookingGroup.Key descending
                                 select new
                                 {
-                                    Date = bookingGroup.Key.Date,
+                                    Date = bookingGroup.Key,
                                     Revenue = bookingGroup.Sum(booking => booking.RequiredAmount.HasValue ? booking.RequiredAmount.Value : 0),
                                     BookingIds = bookingGroup.Select(booking => booking.Id).ToList()
                                 };
@@ -100,7 +101,7 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
                           select new GetStatisticByTimeStepResponse
                           {
                               Label = $"{date:dd/MM/yyyy}",
-                              Revenue = dateBookingGroup != null ? dateBookingGroup.Revenue : 0,
+                              TotalRevenue = dateBookingGroup != null ? dateBookingGroup.Revenue : 0,
                               NumberOfBookings = dateBookingGroup != null ? dateBookingGroup.BookingIds.Count() : 0,
                               NumberOfTickets = dateBookingGroup != null ? dateBookingGroup.BookingIds.Sum(id => _bookingRepository.GetBookingNumberOfTickets(id)) : 0
                           }).ToList();
@@ -111,7 +112,7 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
             DateTime currentDate = _timeZoneService.GetGMT7Time();
             List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
 
-            var cinemaBookings = _bookingRepository.GetBookingsByCinema(CinemaId);
+            var cinemaBookings = _bookingRepository.GetCurrPrdBookingsByTimeChoice(StatisticsTimeOption.AllTime, null, null, CinemaId);
 
             var bookingGroups = from booking in cinemaBookings
                                 where !booking.IsDeleted
@@ -148,7 +149,7 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
                           select new GetStatisticByTimeStepResponse
                           {
                               Label = $"{week.Date:dd/MM/yyyy}-{week.Date.AddDays(6):dd/MM/yyyy}",
-                              Revenue = weekBookingGroup != null ? weekBookingGroup.Revenue : 0,
+                              TotalRevenue = weekBookingGroup != null ? weekBookingGroup.Revenue : 0,
                               NumberOfBookings = weekBookingGroup != null ? weekBookingGroup.BookingIds.Count() : 0,
                               NumberOfTickets = weekBookingGroup != null ? weekBookingGroup.BookingIds.Sum(id => _bookingRepository.GetBookingNumberOfTickets(id)) : 0
                           }).ToList();
@@ -159,35 +160,35 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
             DateTime currentDate = _timeZoneService.GetGMT7Time();
             List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
 
-            var cinemaBookings = _bookingRepository.GetBookingsByCinema(CinemaId);
+            var cinemaBookings = _bookingRepository.GetCurrPrdBookingsByTimeChoice(StatisticsTimeOption.AllTime, null, null, CinemaId);
 
             var bookingGroups = from booking in cinemaBookings
                                 where !booking.IsDeleted
                            && booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
                            && booking.BookingDate.HasValue
-                           group booking by new
-                           {
-                               month = booking.BookingDate.Value.Month,
-                               year = booking.BookingDate.Value.Year,
-                           } into bookingGroup
-                           orderby bookingGroup.Key.year descending, bookingGroup.Key.month descending
-                           select new
-                           {
-                               MonthYear = new DateTime(bookingGroup.Key.year, bookingGroup.Key.month, 1),
-                               Revenue = bookingGroup.Sum(booking => booking.RequiredAmount.HasValue ? booking.RequiredAmount.Value : 0),
-                               BookingIds = bookingGroup.Select(booking => booking.Id).ToList()
-                           };
+                                group booking by new
+                                {
+                                    month = booking.BookingDate.Value.Month,
+                                    year = booking.BookingDate.Value.Year,
+                                } into bookingGroup
+                                orderby bookingGroup.Key.year descending, bookingGroup.Key.month descending
+                                select new
+                                {
+                                    MonthYear = new DateTime(bookingGroup.Key.year, bookingGroup.Key.month, 1),
+                                    Revenue = bookingGroup.Sum(booking => booking.RequiredAmount.HasValue ? booking.RequiredAmount.Value : 0),
+                                    BookingIds = bookingGroup.Select(booking => booking.Id).ToList()
+                                };
 
             if (bookingGroups.Count() == 0)
                 return statistics;
 
             DateTime startMonth = bookingGroups.Last().MonthYear;
             List<DateTime> allMonths = new List<DateTime>();
-            for (DateTime month = startMonth; month <= currentDate; month =  month.AddMonths(1))
+            for (DateTime month = startMonth; month <= currentDate; month = month.AddMonths(1))
             {
                 allMonths.Add(month);
             }
-            
+
             statistics = (from month in allMonths.OrderDescending().AsEnumerable()
                           join bookingGroup in bookingGroups
                           on month.Date equals bookingGroup.MonthYear.Date
@@ -196,9 +197,54 @@ namespace Application.Features.Statistics.Queries.GetStatisticByTimeStep
                           select new GetStatisticByTimeStepResponse
                           {
                               Label = $"{month:MM/yyyy}",
-                              Revenue = monthBookingGroup != null? monthBookingGroup.Revenue : 0,
+                              TotalRevenue = monthBookingGroup != null ? monthBookingGroup.Revenue : 0,
                               NumberOfBookings = monthBookingGroup != null ? monthBookingGroup.BookingIds.Count() : 0,
                               NumberOfTickets = monthBookingGroup != null ? monthBookingGroup.BookingIds.Sum(id => _bookingRepository.GetBookingNumberOfTickets(id)) : 0
+                          }).ToList();
+            return statistics;
+        }
+        public List<GetStatisticByTimeStepResponse> HandleYearStep(long CinemaId)
+        {
+            DateTime currentDate = _timeZoneService.GetGMT7Time();
+            List<GetStatisticByTimeStepResponse> statistics = new List<GetStatisticByTimeStepResponse>();
+
+            var cinemaBookings = _bookingRepository.GetCurrPrdBookingsByTimeChoice(StatisticsTimeOption.AllTime, null, null, CinemaId);
+
+            var bookingGroups = from booking in cinemaBookings
+                                where !booking.IsDeleted
+                           && booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
+                           && booking.BookingDate.HasValue
+                                group booking by booking.BookingDate.Value.Year
+                                into bookingGroup
+                                orderby bookingGroup.Key descending
+                                select new
+                                {
+                                    Year = bookingGroup.Key,
+                                    Revenue = bookingGroup.Sum(booking => booking.RequiredAmount.HasValue ? booking.RequiredAmount.Value : 0),
+                                    BookingIds = bookingGroup.Select(booking => booking.Id).ToList()
+                                };
+
+            if (bookingGroups.Count() == 0)
+                return statistics;
+
+            DateTime startYear = new DateTime(bookingGroups.Last().Year,1,1);
+            List<DateTime> allYears = new List<DateTime>();
+            for (var year = startYear; year <= currentDate; year = year.AddYears(1))
+            {
+                allYears.Add(year);
+            }
+
+            statistics = (from year in allYears.OrderDescending().AsEnumerable()
+                          join bookingGroup in bookingGroups
+                          on year.Year equals bookingGroup.Year
+                          into yearBookingGroups
+                          from yearBookingGroup in yearBookingGroups.DefaultIfEmpty()
+                          select new GetStatisticByTimeStepResponse
+                          {
+                              Label = $"{year:yyyy}",
+                              TotalRevenue = yearBookingGroup != null ? yearBookingGroup.Revenue : 0,
+                              NumberOfBookings = yearBookingGroup != null ? yearBookingGroup.BookingIds.Count() : 0,
+                              NumberOfTickets = yearBookingGroup != null ? yearBookingGroup.BookingIds.Sum(id => _bookingRepository.GetBookingNumberOfTickets(id)) : 0
                           }).ToList();
             return statistics;
         }

@@ -1,12 +1,11 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Booking;
+using Application.Interfaces.Cinema;
 using Application.Interfaces.Schedule;
-using Application.Interfaces.Services;
 using Domain.Constants;
 using Domain.Constants.Enum;
 using Domain.Wrappers;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Dynamic.Core;
 
@@ -19,29 +18,32 @@ namespace Application.Features.Statistics.Queries.GetDaytimeRangesStatistic
         public StatisticsTimeOption TimeOption { get; set; }
         public DateTime? FromTime { get; set; }
         public DateTime? ToTime { get; set; }
+        public long CinemaId {  get; set; }
         public string? OrderBy {  get; set; }
     }
     public class GetDaytimeRangesStatisticQueryHandler : IRequestHandler<GetDaytimeRangesStatisticQuery, Result<List<GetDaytimeRangesStatisticResponse>>>
     {
         private readonly IBookingRepository _bookingRepository;
         private readonly IScheduleRepository _scheduleRepository;
-        private readonly ITimeZoneService _timeZoneService;
+        private readonly ICinemaRepository _cinemaRepository;
+        private readonly IEnumService _enumService;
         
         public GetDaytimeRangesStatisticQueryHandler(
             IBookingRepository bookingRepository,
             IScheduleRepository scheduleRepository,
-            ITimeZoneService timeZoneService)
+            ICinemaRepository cinemaRepository,
+            IEnumService enumService)
         {
             _bookingRepository = bookingRepository;
             _scheduleRepository = scheduleRepository;
-            _timeZoneService = timeZoneService;
+            _cinemaRepository = cinemaRepository;
+            _enumService = enumService;
         }
 
         public async Task<Result<List<GetDaytimeRangesStatisticResponse>>> Handle(GetDaytimeRangesStatisticQuery request, CancellationToken cancellationToken)
         {
-            var bookings = _bookingRepository
-                .GetBookingsByTimeChoice(request.TimeOption, request.FromTime, request.ToTime)
-                .AsQueryable();
+            if (request.CinemaId != 0 && !_cinemaRepository.Entities.Any(_ => !_.IsDeleted && _.Id == request.CinemaId))
+                return Result<List<GetDaytimeRangesStatisticResponse>>.Fail("NOT_FOUND_CINEMA");
 
             var timeRangesStatistic = new List<GetDaytimeRangesStatisticResponse>
             {
@@ -49,62 +51,41 @@ namespace Application.Features.Statistics.Queries.GetDaytimeRangesStatistic
                 {
                     StartHour =  8, 
                     EndHour =  12,
-                    FcsBookingRevenue = 0m,
-                    FcsScheduleRevenue = 0m
+                    Revenue = 0m,
+                    OccupancyRate = 0,
                 },
                 new GetDaytimeRangesStatisticResponse()
                 {
                     StartHour =  12,
                     EndHour = 16,
-                    FcsBookingRevenue = 0m,
-                    FcsScheduleRevenue = 0m
+                    Revenue = 0m,
+                    OccupancyRate = 0
                 },
                 new GetDaytimeRangesStatisticResponse()
                 {
                     StartHour = 16,
                     EndHour = 20,
-                    FcsBookingRevenue = 0m,
-                    FcsScheduleRevenue = 0m
+                    Revenue = 0m,
+                    OccupancyRate = 0
                 },
                 new GetDaytimeRangesStatisticResponse()
                 {
                     StartHour = 20,
                     EndHour = 24,
-                    FcsBookingRevenue = 0m,
-                    FcsScheduleRevenue = 0m
+                    Revenue = 0m,
+                    OccupancyRate = 0
                 }
             };
 
-            var bookingQuery = (from booking in bookings
-                         join schedule in _scheduleRepository.Entities
-                         on new { Id = booking.ScheduleId, IsDeleted = false } equals new { schedule.Id, schedule.IsDeleted }
-                         select new
-                         {
-                             bookingInfo = booking,
-                             scheduleInfo = schedule
-                         }).ToList();
+            var schedules = _scheduleRepository
+                .GetCurrPrdScheduleByTimeOption(request.TimeOption, request.FromTime, request.ToTime, request.CinemaId)
+                .AsQueryable();
 
-            foreach (var bookingSchedule in bookingQuery)
-            {
-                var scheduleHour = bookingSchedule.scheduleInfo.StartTime.Hour;
-                var timeRange = timeRangesStatistic.FirstOrDefault(range =>
-                    range.StartHour <= scheduleHour
-                    && scheduleHour < range.EndHour
-                );
-                if (timeRange != null)
-                {
-                    timeRange.FcsBookingRevenue += bookingSchedule.bookingInfo.RequiredAmount.HasValue? bookingSchedule.bookingInfo.RequiredAmount.Value:0;
-                    timeRange.FcsBookingNumberOfBookings += 1;
-                    timeRange.FcsBookingNumberOfTickets += _bookingRepository.GetBookingNumberOfTickets(bookingSchedule.bookingInfo.Id);
-                    timeRange.FcsBookingNumberOfSchedules += 1;
-                }
-            }
-
-            var schedules = GetScheduleByTimeOption(request).AsQueryable();
-
-            var scheduleQuery = from schedule in schedules
+            var scheduleBookingsQuery = from schedule in schedules
                                 join booking in _bookingRepository.Entities
-                                on new { ScheduleId = schedule.Id, IsDeleted = false } equals new { booking.ScheduleId, booking.IsDeleted }
+                                .Where(booking => !booking.IsDeleted 
+                                && booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
+                                on schedule.Id equals booking.ScheduleId
                                 into scheduleBookings
                                 from scheduleBooking in scheduleBookings.DefaultIfEmpty()
                                 select new
@@ -112,23 +93,37 @@ namespace Application.Features.Statistics.Queries.GetDaytimeRangesStatistic
                                     scheduleInfo = schedule,
                                     bookingInfo = scheduleBooking
                                 };
+            var groupScheduleBookings = scheduleBookingsQuery.GroupBy(_ => _.scheduleInfo.Id);
 
-            foreach (var scheduleBooking in scheduleQuery)
+            foreach (var groupSchedule in groupScheduleBookings)
             {
-                var scheduleHour = scheduleBooking.scheduleInfo.StartTime.Hour;
+                var scheduleHour = groupSchedule.First().scheduleInfo.StartTime.Hour;
                 var timeRange = timeRangesStatistic.FirstOrDefault(range =>
                     range.StartHour <= scheduleHour
                     && scheduleHour < range.EndHour
                 );
+
                 if ( timeRange != null)
                 {
-                    if (scheduleBooking.bookingInfo != null)
+                    foreach (var booking in groupSchedule)
                     {
-                        timeRange.FcsScheduleRevenue += scheduleBooking.bookingInfo.RequiredAmount.HasValue ? scheduleBooking.bookingInfo.RequiredAmount.Value : 0;
-                        timeRange.FcsScheduleNumberOfBookings += 1;
-                        timeRange.FcsScheduleNumberOfTickets += _bookingRepository.GetBookingNumberOfTickets(scheduleBooking.bookingInfo.Id);
+                        if (booking.bookingInfo != null)
+                        {
+                            timeRange.Revenue += booking.bookingInfo.RequiredAmount.HasValue ? booking.bookingInfo.RequiredAmount.Value : 0;
+                            timeRange.NumberOfBookings += 1;
+                            timeRange.NumberOfTickets += _bookingRepository.GetBookingNumberOfTickets(booking.bookingInfo.Id);
+                        }
                     }
-                    timeRange.FcsScheduleNumberOfSchedules += 1;
+                    timeRange.NumberOfSchedules += 1;
+                    timeRange.OccupancyRate += _scheduleRepository.GetOccupancyRate(groupSchedule.First().scheduleInfo.Id);
+                }
+            }
+
+            foreach(var timeRange in timeRangesStatistic)
+            {
+                if (timeRange.NumberOfSchedules > 0)
+                {
+                    timeRange.OccupancyRate /= timeRange.NumberOfSchedules;
                 }
             }
 
@@ -142,44 +137,6 @@ namespace Application.Features.Statistics.Queries.GetDaytimeRangesStatistic
                 result = timeRangesStatistic;
 
             return await Result<List<GetDaytimeRangesStatisticResponse>>.SuccessAsync(result);
-        }
-        public IEnumerable<Domain.Entities.Schedule.Schedule> GetScheduleByTimeOption(GetDaytimeRangesStatisticQuery request)
-        {
-            IEnumerable<Domain.Entities.Schedule.Schedule> schedules;
-
-            DateTime currentDate = _timeZoneService.GetGMT7Time();
-
-            if (request.TimeOption == StatisticsTimeOption.Today)
-            {
-                schedules = _scheduleRepository.Entities
-                .Where(x => !x.IsDeleted && x.StartTime.Date == currentDate.Date);
-            }
-            else if (request.TimeOption == StatisticsTimeOption.ThisWeek)
-            {
-                DateTime firstDateOfThisWeek = currentDate.AddDays((int)currentDate.DayOfWeek == 0 ? -7 : -(int)currentDate.DayOfWeek);
-                schedules = _scheduleRepository.Entities
-                .Where(x => !x.IsDeleted && x.StartTime.Date > firstDateOfThisWeek.Date && x.StartTime.Date <= currentDate.Date);
-            }
-            else if (request.TimeOption == StatisticsTimeOption.ThisMonth)
-            {
-                DateTime firstDayOfThisMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
-                schedules = _scheduleRepository.Entities
-                    .Where(x => !x.IsDeleted && x.StartTime.Date >= firstDayOfThisMonth.Date && x.StartTime.Date <= currentDate.Date);
-            }
-            else if (request.TimeOption == StatisticsTimeOption.ThisYear)
-            {
-                DateTime firstDayOfThisYear = new DateTime(currentDate.Year, 1, 1);
-                schedules = _scheduleRepository.Entities
-                    .Where(x => !x.IsDeleted && x.StartTime.Date >= firstDayOfThisYear.Date && x.StartTime.Date <= currentDate.Date);
-            }
-            else
-            {
-                DateTime toTime = request.ToTime.HasValue ? request.ToTime.Value : currentDate;
-                schedules = _scheduleRepository.Entities
-                .Where(x => !x.IsDeleted
-                && (request.FromTime.HasValue && x.StartTime.Date >= request.FromTime.Value.Date && x.StartTime.Date <= toTime.Date));
-            }
-            return schedules;
         }
     }
 }

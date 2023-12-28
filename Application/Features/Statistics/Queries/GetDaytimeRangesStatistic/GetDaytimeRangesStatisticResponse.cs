@@ -11,13 +11,10 @@ namespace Application.Features.Statistics.Queries.GetDaytimeRangesStatistic
     {
         public int StartHour {  get; set; }
         public int EndHour { get; set; }
-        public decimal? FcsBookingRevenue {  get; set; }
-        public int FcsBookingNumberOfBookings { get; set; }
-        public int FcsBookingNumberOfTickets {  get; set; }
-        public int FcsBookingNumberOfSchedules {  get; set; }
-        public decimal? FcsScheduleRevenue { get; set; }
-        public int FcsScheduleNumberOfBookings { get; set; }
-        public int FcsScheduleNumberOfTickets { get; set; }
-        public int FcsScheduleNumberOfSchedules { get; set; }
+        public decimal? Revenue { get; set; }
+        public int NumberOfBookings { get; set; }
+        public int NumberOfTickets { get; set; }
+        public int NumberOfSchedules { get; set; }
+        public decimal? OccupancyRate {  get; set; }
     }
 }

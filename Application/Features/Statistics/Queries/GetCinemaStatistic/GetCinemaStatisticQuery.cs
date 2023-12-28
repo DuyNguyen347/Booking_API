@@ -11,12 +11,12 @@ using System.Linq.Dynamic.Core;
 
 namespace Application.Features.Statistics.Queries.GetCinemaStatistic
 {
-    public class GetCinemaStatisticQuery: RequestParameter, IRequest<PaginatedResult<GetCinemaStatisticResponse>>
+    public class GetCinemaStatisticQuery : RequestParameter, IRequest<PaginatedResult<GetCinemaStatisticResponse>>
     {
         public StatisticsTimeOption TimeOption { get; set; }
         public DateTime? FromTime { get; set; }
-        public DateTime? ToTime { get; set;}
-        public long CinemaId {  get; set; }
+        public DateTime? ToTime { get; set; }
+        public long CinemaId { get; set; }
     }
     public class GetCinemaStatisticQueryHandler : IRequestHandler<GetCinemaStatisticQuery, PaginatedResult<GetCinemaStatisticResponse>>
     {
@@ -41,9 +41,12 @@ namespace Application.Features.Statistics.Queries.GetCinemaStatistic
         {
             var cinemaStatistics = new List<GetCinemaStatisticResponse>();
 
+            if (request.CinemaId != 0 && !_cinemaRepository.Entities.Any(_ => !_.IsDeleted && _.Id == request.CinemaId))
+                return PaginatedResult<GetCinemaStatisticResponse>.Failure(new List<string> { "NOT_FOUND_CINEMA" });
+
             var bookings = _bookingRepository
-                .GetBookingsByTimeChoice(request.TimeOption, request.FromTime, request.ToTime)
-                .AsQueryable();
+            .GetCurrPrdBookingsByTimeChoice(request.TimeOption, request.FromTime, request.ToTime)
+            .AsQueryable();
 
             //Thuc hien loc ket qua
             var query = (from cinema in _cinemaRepository.Entities
@@ -82,16 +85,19 @@ namespace Application.Features.Statistics.Queries.GetCinemaStatistic
 
                 decimal revenue = 0m;
                 int numberOfTickets = 0;
+                int numberOfBookings = 0;
                 foreach (var booking in cinemaBooking)
                 {
                     if (booking.bookingInfo != null)
                     {
                         revenue += booking.bookingInfo.RequiredAmount.HasValue ? booking.bookingInfo.RequiredAmount.Value : 0;
                         numberOfTickets += _bookingRepository.GetBookingNumberOfTickets(booking.bookingInfo.Id);
+                        numberOfBookings += 1;
                     }
                 }
-                cinemaStatistic.Revenue = revenue;
+                cinemaStatistic.TotalRevenue = revenue;
                 cinemaStatistic.NumberOfTickets = numberOfTickets;
+                cinemaStatistic.NumberOfBookings = numberOfBookings;
                 cinemaStatistics.Add(cinemaStatistic);
             }
             //tim kiem va sap xep
@@ -111,7 +117,7 @@ namespace Application.Features.Statistics.Queries.GetCinemaStatistic
             if (!request.OrderBy.Contains("CreatedOn"))
                 data = data.OrderBy(request.OrderBy);
             else
-                data = data.OrderBy("Revenue desc");
+                data = data.OrderBy("TotalRevenue desc");
 
             //Phan trang
             List<GetCinemaStatisticResponse> result;
