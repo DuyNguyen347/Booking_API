@@ -4,6 +4,7 @@ using Application.Parameters;
 using Domain.Helpers;
 using Domain.Wrappers;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using System.Linq.Dynamic.Core;
 
 namespace Application.Features.Customer.Queries.GetAll
@@ -14,15 +15,18 @@ namespace Application.Features.Customer.Queries.GetAll
     internal class GetAllCustomerHandler : IRequestHandler<GetAllCustomerQuery, PaginatedResult<GetAllCustomerResponse>>
     {
         private readonly ICustomerRepository _CustomerRepository;
-        public GetAllCustomerHandler(ICustomerRepository CustomerRepository)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public GetAllCustomerHandler(ICustomerRepository CustomerRepository, IHttpContextAccessor httpContextAccessor)
         {
             _CustomerRepository = CustomerRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
         public async Task<PaginatedResult<GetAllCustomerResponse>> Handle(GetAllCustomerQuery request, CancellationToken cancellationToken)
         {
             if (request.Keyword != null)
                 request.Keyword = request.Keyword.Trim();
 
+            Console.WriteLine("url link: ", _httpContextAccessor.HttpContext.Request);
             var query = _CustomerRepository.Entities.AsEnumerable()
                         .Where(x => !x.IsDeleted 
                                 && (string.IsNullOrEmpty(request.Keyword) 
@@ -33,6 +37,7 @@ namespace Application.Features.Customer.Queries.GetAll
                         {
                             Id = x.Id,
                             CustomerName = x.CustomerName,
+                            Email = x.Email,
                             PhoneNumber = x.PhoneNumber,
                             Address = x.Address,
                             DateOfBirth = x.DateOfBirth,
