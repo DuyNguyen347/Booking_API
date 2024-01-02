@@ -45,8 +45,6 @@ namespace Application.Features.SeatReservation.Command.UnlockCommand
         {
             long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
 
-            var existCustomer = await _customerRepository.FindAsync(x => x.Id == userId && !x.IsDeleted);
-            if (existCustomer == null) return await Result<UnlockSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<UnlockSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
             _seatReservationService.UnlockSeats(userId, request.ScheduleId, request.NumberSeats);

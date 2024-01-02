@@ -7,6 +7,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Features\Booking\Queries\GetAll\GetAllCustomerBooking\**" />
+	  <Compile Remove="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\**" />
+	  <Compile Remove="Features\PaymentDestination\**" />
+	  <EmbeddedResource Remove="Features\Booking\Queries\GetAll\GetAllCustomerBooking\**" />
+	  <EmbeddedResource Remove="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\**" />
+	  <EmbeddedResource Remove="Features\PaymentDestination\**" />
+	  <None Remove="Features\Booking\Queries\GetAll\GetAllCustomerBooking\**" />
+	  <None Remove="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\**" />
+	  <None Remove="Features\PaymentDestination\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Domain\Domain.csproj" />
 	</ItemGroup>
 	<ItemGroup>
@@ -26,12 +38,8 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.13" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
 		<PackageReference Include="QRCoder-ImageSharp" Version="0.9.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
 		<PackageReference Include="System.Text.Json" Version="7.0.1" />
 		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.2.25" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Features\Booking\Queries\GetAll\GetAllCustomerBooking\" />
-	  <Folder Include="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\" />
-	  <Folder Include="Features\PaymentDestination\" />
 	</ItemGroup>
 </Project>

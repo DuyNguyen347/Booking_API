@@ -34,9 +34,9 @@ namespace Application.Features.Booking.Queries.GetById
         private readonly IFilmRepository _filmRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IMapper _mapper;
-        private readonly ICurrentUserService _currentUserService;
         private readonly IUploadService _uploadService;
         private readonly IFilmImageRepository _filmImageRepository;
+        private readonly IEnumService _enumService;
         private readonly UserManager<AppUser> _userManager;
 
         public GetBookingByIdQueryHandler(
@@ -44,26 +44,26 @@ namespace Application.Features.Booking.Queries.GetById
             IBookingRepository bookingRepository, 
             ITicketRepository ticketRepository,
             ICustomerRepository customerRepository, 
-            ICurrentUserService currentUserService,
             IScheduleRepository scheduleRepository,
             IRoomRepository roomRepository,
             ICinemaRepository cinemaRepository,
             IFilmRepository filmRepository,
             IUploadService uploadService,
             IFilmImageRepository filmImageRepository, 
+            IEnumService enumService,
             UserManager<AppUser> userManager)
         {
             _mapper = mapper;
             _bookingRepository = bookingRepository;
             _ticketRepository = ticketRepository;
             _customerRepository = customerRepository;
-            _currentUserService = currentUserService;
             _scheduleRepository = scheduleRepository;
             _roomRepository = roomRepository;
             _cinemaRepository = cinemaRepository;
             _filmRepository = filmRepository;
             _uploadService = uploadService;
             _filmImageRepository = filmImageRepository;
+            _enumService = enumService;
             _userManager = userManager;
         }
         public async Task<Result<GetBookingByIdResponse>> Handle(GetBookingByIdQuery request, CancellationToken cancellationToken)
@@ -87,21 +87,16 @@ namespace Application.Features.Booking.Queries.GetById
 
             var response = _mapper.Map<GetBookingByIdResponse>(Booking);
 
-            var CustomerBooking = await _customerRepository.Entities
-                .Where(_ => _.Id == Booking.CustomerId)
-                .Select(s => new Domain.Entities.Customer.Customer
+            var CustomerBooking = await _userManager.Users
+                .Where(_ => !_.IsDeleted && _.UserId == Booking.CustomerId && _.UserName == Booking.CreatedBy)
+                .Select(s => new 
                 {
-                    Id = s.Id,
-                    CustomerName = s.CustomerName,
-                    PhoneNumber = s.PhoneNumber,
+                    Name = s.FullName,
+                    Phone = s.PhoneNumber,
                 }).FirstOrDefaultAsync();
-            if(CustomerBooking == null)
-            {
-                return await Result<GetBookingByIdResponse>.FailAsync(StaticVariable.NOT_FOUND_MSG);
-            }
 
-            response.CustomerName = CustomerBooking.CustomerName;
-            response.PhoneNumber = CustomerBooking.PhoneNumber;
+            response.CustomerName = CustomerBooking.Name;
+            response.PhoneNumber = CustomerBooking.Phone;
             response.TotalPrice = Booking.RequiredAmount;
 
             var bookingInfo = await (from schedule in _scheduleRepository.Entities
@@ -130,6 +125,9 @@ namespace Application.Features.Booking.Queries.GetById
                 response.Image = bookingInfo.Image;
                 response.StartTime = bookingInfo.StartTime;
             }
+
+            response.UsageStatus = string.IsNullOrEmpty(Booking.BookingStatus) ?
+                    _bookingRepository.GetBookingUsageStatus(response.Id) : Booking.BookingStatus;
 
             List<TicketBookingResponse> bookingTickets = await _ticketRepository.Entities
                 .Where(_ => _.BookingId == Booking.Id && !_.IsDeleted)

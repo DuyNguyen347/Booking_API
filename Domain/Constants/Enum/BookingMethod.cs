@@ -6,13 +6,9 @@ using System.Threading.Tasks;
 
 namespace Domain.Constants.Enum
 {
-    public enum StatisticsTimeOption
+    public enum BookingMethod
     {
-        Today = 0,
-        ThisWeek = 1,
-        ThisMonth = 2,
-        ThisYear = 3,
-        CustomTime = 4,
-        AllTime = 5,
+        Online = 0,
+        Offline = 1,
     }
 }

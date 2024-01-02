@@ -9,7 +9,8 @@
         public string? Category {  get; set; }
         public int NumberOfVotes { get; set; }
         public decimal? Score { get; set; }
-        public decimal? Revenue { get; set; }
+        public decimal? TotalRevenue { get; set; }
+        public int NumberOfBookings {  get; set; }
         public int NumberOfTickets {  get; set; }
     }
 }

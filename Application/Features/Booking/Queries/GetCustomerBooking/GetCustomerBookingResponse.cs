@@ -11,6 +11,7 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
         public string? CinemaName {  get; set; }
         public decimal? TotalPrice {  get; set; }
         public string? BookingCurrency { get; set; }
+        public string? UsageStatus {  get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? LastModifiedOn { get; set; }
     }

@@ -4,6 +4,7 @@ using Domain.Constants;
 using Application.Interfaces;
 using Domain.Constants.Enum;
 using Application.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories.Booking
 {
@@ -14,7 +15,7 @@ namespace Infrastructure.Repositories.Booking
         private readonly ITimeZoneService _timeZoneService;
 
         public BookingRepository(
-            ApplicationDbContext dbContext, 
+            ApplicationDbContext dbContext,
             IEnumService enumService,
             ITimeZoneService timeZoneService) : base(dbContext)
         {
@@ -46,7 +47,7 @@ namespace Infrastructure.Repositories.Booking
             return numberOfTickets;
         }
 
-        public IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByTimeChoice(StatisticsTimeOption TimeOption, DateTime? FromTime, DateTime? ToTime)
+        public IEnumerable<Domain.Entities.Booking.Booking> GetCurrPrdBookingsByTimeChoice(StatisticsTimeOption TimeOption, DateTime? FromTime, DateTime? ToTime, long CinemaId = 0)
         {
             IEnumerable<Domain.Entities.Booking.Booking> bookings;
 
@@ -54,43 +55,163 @@ namespace Infrastructure.Repositories.Booking
 
             if (TimeOption == StatisticsTimeOption.Today)
             {
-                bookings = _dbContext.Bookings
-                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date == currentDate.Date
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+                bookings = GetBookingsByTimeRange(currentDate.Date, currentDate.Date, CinemaId);
             }
-            else if ( TimeOption == StatisticsTimeOption.ThisWeek)
+            else if (TimeOption == StatisticsTimeOption.ThisWeek)
             {
                 DateTime firstDateOfThisWeek = currentDate.AddDays((int)currentDate.DayOfWeek == 0 ? -7 : -(int)currentDate.DayOfWeek);
-                bookings = _dbContext.Bookings
-                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date > firstDateOfThisWeek.Date
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+                bookings = GetBookingsByTimeRange(firstDateOfThisWeek.Date, currentDate.Date, CinemaId);
             }
-            else if ( TimeOption == StatisticsTimeOption.ThisMonth)
+            else if (TimeOption == StatisticsTimeOption.ThisMonth)
             {
-                DateTime firstDayOfThisMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
-                bookings = _dbContext.Bookings
-                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date >= firstDayOfThisMonth.Date
-                    && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
+                DateTime firstDateOfThisMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
+                bookings = GetBookingsByTimeRange(firstDateOfThisMonth.Date, currentDate.Date, CinemaId);
             }
-            else if ( TimeOption == StatisticsTimeOption.ThisYear)
+            else if (TimeOption == StatisticsTimeOption.ThisYear)
             {
-                DateTime firstDayOfThisYear = new DateTime(currentDate.Year, 1, 1);
+                DateTime firstDateOfThisYear = new DateTime(currentDate.Year, 1, 1);
+                bookings = GetBookingsByTimeRange(firstDateOfThisYear.Date, currentDate.Date, CinemaId);
+            }
+            else if (TimeOption == StatisticsTimeOption.CustomTime)
+            {
+                bookings = GetBookingsByTimeRange(FromTime, ToTime, CinemaId);
+            }
+            else
+            {
+                bookings = GetBookingsByTimeRange(null, null, CinemaId);
+            }
+
+            return bookings;
+        }
+
+        public IEnumerable<Domain.Entities.Booking.Booking> GetPrevPrdBookingsByTimeChoice(StatisticsTimeOption TimeOption, DateTime? FromTime, DateTime? ToTime, long CinemaId = 0)
+        {
+            IEnumerable<Domain.Entities.Booking.Booking> bookings;
+
+            DateTime currentTime = _timeZoneService.GetGMT7Time();
+
+            if (TimeOption == StatisticsTimeOption.Today)
+            {
+                DateTime prevDate = currentTime.AddDays(-1);
+                bookings = GetBookingsByTimeRange(prevDate.Date, prevDate.Date, CinemaId);
+            }
+            else if (TimeOption == StatisticsTimeOption.ThisWeek)
+            {
+                DateTime firstDateOfThisWeek = currentTime.AddDays((int)currentTime.DayOfWeek == 0 ? -7 : -(int)currentTime.DayOfWeek);
+                DateTime firstDateOfLastWeek = firstDateOfThisWeek.AddDays(-7);
+                bookings = GetBookingsByTimeRange(firstDateOfLastWeek.Date, firstDateOfThisWeek.AddDays(-1).Date, CinemaId);
+            }
+            else if (TimeOption == StatisticsTimeOption.ThisMonth)
+            {
+                DateTime firstDateOfThisMonth = new DateTime(currentTime.Year, currentTime.Month, 1);
+                DateTime firstDateOfLastMonth = firstDateOfThisMonth.AddMonths(-1);
+                bookings = GetBookingsByTimeRange(firstDateOfLastMonth.Date, firstDateOfThisMonth.AddDays(-1).Date, CinemaId);
+            }
+            else if (TimeOption == StatisticsTimeOption.ThisYear)
+            {
+                DateTime firstDateOfThisYear = new DateTime(currentTime.Year, 1, 1);
+                DateTime firstDateOfLastYear = new DateTime(currentTime.Year - 1, 1, 1);
+                bookings = GetBookingsByTimeRange(firstDateOfLastYear.Date, firstDateOfThisYear.AddDays(-1).Date, CinemaId);
+            }
+            else
+            {
+                bookings = new List<Domain.Entities.Booking.Booking>();
+            }
+
+            return bookings;
+        }
+
+        public IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByTimeRange(DateTime? FromTime, DateTime? ToTime, long CinemaId)
+        {
+            IEnumerable<Domain.Entities.Booking.Booking> bookings;
+            DateTime currentTime = _timeZoneService.GetGMT7Time();
+            DateTime toTime = ToTime.HasValue ? ToTime.Value : currentTime;
+            if (!FromTime.HasValue)
+            {
                 bookings = _dbContext.Bookings
                     .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                    && x.BookingDate.Value.Date >= firstDayOfThisYear.Date
+                    && (x.BookingDate.Value.Date <= toTime.Date)
                     && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
             }
             else
             {
-                DateTime toTime =  ToTime.HasValue ?  ToTime.Value : currentDate;
+                DateTime fromTime = new DateTime();
+                if (FromTime.Value < toTime)
+                    fromTime = FromTime.Value;
+                else if (FromTime.Value > currentTime)
+                {
+                    fromTime = toTime;
+                    toTime = currentTime;
+                }
+                else
+                {
+                    DateTime tempTime = FromTime.Value;
+                    fromTime = toTime;
+                    toTime = tempTime;
+                }
+
                 bookings = _dbContext.Bookings
-                .Where(x => !x.IsDeleted && x.BookingDate.HasValue
-                && (FromTime.HasValue && x.BookingDate.Value.Date >= FromTime.Value.Date && x.BookingDate.Value.Date <= toTime.Date)
+                    .Where(x => !x.IsDeleted && x.BookingDate.HasValue
+                    && (x.BookingDate.Value.Date >= fromTime.Date && x.BookingDate.Value.Date <= toTime.Date)
                     && x.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM));
             }
+
+            if (CinemaId == 0)
+                return bookings;
+
+            IEnumerable<Domain.Entities.Booking.Booking> cinemaBookings = bookings.AsQueryable()
+                .Join(_dbContext.Schedules.Where(_ => !_.IsDeleted),
+                    booking => booking.ScheduleId,
+                    schedule => schedule.Id,
+                    (booking, schedule) => new
+                    {
+                        bookingInfo = booking,
+                        roomId = schedule.RoomId
+                    })
+                .Join(_dbContext.Room.Where(_ => !_.IsDeleted && (CinemaId == 0 || _.CinemaId == CinemaId)),
+                    booking => booking.roomId,
+                    room => room.Id,
+                    (booking, room) => booking.bookingInfo);
+
+            return cinemaBookings;
+        }
+
+        public string GetBookingUsageStatus(long id)
+        {
+            DateTime currentTime = _timeZoneService.GetGMT7Time();
+
+            var booking = _dbContext.Bookings.FirstOrDefault(_ =>
+            !_.IsDeleted
+            && _.Id == id);
+
+            if (booking.Status != _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
+                return "unavailable";
+
+            var schedule = _dbContext.Schedules.FirstOrDefault(_ =>
+            !_.IsDeleted
+            && _.Id == booking.ScheduleId
+            && _.StartTime.AddMinutes(30) > currentTime);
+
+            if (schedule != null)
+                return "usable";
+            return "expired";
+        }
+
+        public IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByCinemaAsync(long CinemaId)
+        {
+            var bookings = _dbContext.Bookings.AsQueryable().Where(_ => !_.IsDeleted)
+                .Join(_dbContext.Schedules.AsQueryable().Where(_ => !_.IsDeleted),
+                    booking => booking.ScheduleId,
+                    schedule => schedule.Id,
+                    (booking, schedule) => new
+                    {
+                        bookingInfo = booking,
+                        roomId = schedule.RoomId
+                    })
+                .Join(_dbContext.Room.AsQueryable().Where(_ => !_.IsDeleted && (CinemaId == 0 || _.CinemaId == CinemaId)),
+                    booking => booking.roomId,
+                    room => room.Id,
+                    (booking, room) => booking.bookingInfo);
             return bookings;
         }
     }

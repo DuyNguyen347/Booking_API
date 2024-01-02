@@ -68,13 +68,13 @@ namespace Application.Features.SeatReservation.Command.AddCommand
         public async Task<Result<AddSeatReservationCommand>> Handle(AddSeatReservationCommand request, CancellationToken cancellationToken)
         {
             long userId = _userManager.Users.Where(user => _currentUserService.UserName.Equals(user.UserName)).Select(user => user.UserId).FirstOrDefault();
- 
-            var existCustomer = await _customerRepository.FindAsync(x => x.Id == userId && !x.IsDeleted);
-            if (existCustomer == null) return await Result<AddSeatReservationCommand>.FailAsync(StaticVariable.NOT_FOUND_CUSTOMER);
 
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<AddSeatReservationCommand>.FailAsync("NOT_FOUND_SCHEDULE");
-            
+
+            if (existSchedule.StartTime <= _timeZoneService.GetGMT7Time())
+                return await Result<AddSeatReservationCommand>.FailAsync("The schedule is no more available to book");
+
             var existSeats = (from schedule in _scheduleRepository.Entities
                                     where !schedule.IsDeleted && schedule.Id == request.ScheduleId
                                     join room in _roomRepository.Entities
@@ -100,7 +100,6 @@ namespace Application.Features.SeatReservation.Command.AddCommand
                     return await Result<AddSeatReservationCommand>.FailAsync("EXISTING_BOOKED_NUMBERSEATS");
             }
             
-
             bool IsSuccess = _seatReservationService.LockSeats(userId, request.ScheduleId, request.NumberSeats);
             if (!IsSuccess)
                 return Result<AddSeatReservationCommand>.Fail("SEATS_UNAVAILABLE_TEMPORARILY");

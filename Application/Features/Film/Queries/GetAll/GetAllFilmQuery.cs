@@ -54,6 +54,7 @@ namespace Application.Features.Film.Queries.GetAll
                         .Select(x => new GetAllFilmResponse
                         {
                             Id = x.Id,
+                            Enable = x.Enable,
                             Name = x.Name,
                             Actor = x.Actor,
                             Director = x.Director,

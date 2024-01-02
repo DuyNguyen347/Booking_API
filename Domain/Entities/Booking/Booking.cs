@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Domain.Contracts;
+using Domain.Constants.Enum;
 
 namespace Domain.Entities.Booking
 {
@@ -10,6 +11,10 @@ namespace Domain.Entities.Booking
         [Required]
         [Column("customer_id",TypeName = "bigint")]
         public long CustomerId { get; set; }
+
+        [Required]
+        [Column("booking_method", TypeName = "int")]
+        public BookingMethod BookingMethod { get; set; }
 
         [Required]
         [Column("schedule_id", TypeName = "bigint")]

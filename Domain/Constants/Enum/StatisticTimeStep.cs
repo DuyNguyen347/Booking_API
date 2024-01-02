@@ -6,13 +6,11 @@ using System.Threading.Tasks;
 
 namespace Domain.Constants.Enum
 {
-    public enum StatisticsTimeOption
+    public enum StatisticTimeStep
     {
-        Today = 0,
-        ThisWeek = 1,
-        ThisMonth = 2,
-        ThisYear = 3,
-        CustomTime = 4,
-        AllTime = 5,
+        Day = 0,
+        Week = 1, 
+        Month = 2,
+        Year = 3
     }
 }
