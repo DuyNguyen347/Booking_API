@@ -8,6 +8,7 @@ using Application.Interfaces.Schedule;
 using Application.Parameters;
 using AutoMapper;
 using Domain.Constants;
+using Domain.Constants.Enum;
 using Domain.Entities;
 using Domain.Helpers;
 using Domain.Wrappers;
@@ -54,6 +55,7 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                 .Where(
                 _ => !_.IsDeleted &&
                 _.CustomerId == userId &&
+                _.BookingMethod == BookingMethod.Online &&
                 _.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
                 .AsQueryable()
                 .Select(s => new GetCustomerBookingResponse
@@ -65,6 +67,7 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
                     BookingCurrency = s.BookingCurrency,
                     FilmName = _scheduleRepository.GetFilmName(s.ScheduleId),
                     CinemaName = _scheduleRepository.GetCinemaName(s.ScheduleId),
+                    UsageStatus = s.BookingStatus,
                     CreatedOn = s.CreatedOn,
                     LastModifiedOn = s.LastModifiedOn,
                 });
@@ -77,6 +80,12 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
             var searchedBookings = orderedBookings.Where(x => string.IsNullOrEmpty(request.Keyword)
                                 || StringHelper.Contains(x.FilmName, request.Keyword)
                                 || StringHelper.Contains(x.CinemaName, request.Keyword)).ToList();
+
+            foreach (var booking in searchedBookings)
+            {
+                if (string.IsNullOrEmpty(booking.UsageStatus))
+                    booking.UsageStatus = _bookingRepository.GetBookingUsageStatus(booking.Id);
+            }
 
             var totalRecord = searchedBookings.Count();
             List<GetCustomerBookingResponse> result;

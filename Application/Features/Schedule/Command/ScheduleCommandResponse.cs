@@ -16,5 +16,17 @@ namespace Application.Features.Schedule.Command
         public string? FilmName {  get; set; }
         public long RoomId { get; set; }
         public int Price { get; set; }
+        public List<ConflictSchedule>? ConflictSchedules { get; set; }
+    }
+    public class ConflictSchedule
+    {
+        public long Id { get; set; }
+        public int Duration { get; set; }
+        public string? Description { get; set; }
+        public DateTime StartTime { get; set; }
+        public long FilmId { get; set; }
+        public string? FilmName { get; set; }
+        public long RoomId { get; set; }
+        public int Price { get; set; }
     }
 }

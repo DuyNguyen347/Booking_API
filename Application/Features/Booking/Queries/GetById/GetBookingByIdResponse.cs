@@ -6,6 +6,7 @@ namespace Application.Features.Booking.Queries.GetById
     public class GetBookingByIdResponse
     {
         public long Id { get; set; }
+        public string? BookingRefId {  get; set; }
         public string? CustomerName { get; set; }
         public string? PhoneNumber { get; set; }
         public decimal? TotalPrice { get; set; }
@@ -15,6 +16,7 @@ namespace Application.Features.Booking.Queries.GetById
         public DateTime StartTime { get; set; }
         public string? CinemaName {  get; set; }
         public string? FilmName {  get; set; }
+        public string? UsageStatus { get; set; }
         public string? RoomName { get; set; }
         public string? Image {  get; set; }
         public List<TicketBookingResponse> Tickets { get; set; } = new List<TicketBookingResponse>();

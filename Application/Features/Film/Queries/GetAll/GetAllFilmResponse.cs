@@ -7,6 +7,7 @@ namespace Application.Features.Film.Queries.GetAll
     public class GetAllFilmResponse
     {
         public long Id { get; set; }
+        public bool Enable { get; set; }
         public string? Name { get; set; }
         public string? Actor { get ; set; }
         public string? Director { get; set; }

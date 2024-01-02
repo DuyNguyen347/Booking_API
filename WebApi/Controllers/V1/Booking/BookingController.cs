@@ -1,8 +1,8 @@
-//using Application.Features.Booking.Command.AddBooking;
 using Application.Features.Booking.Command.AddBooking;
 using Application.Features.Booking.Command.DeleteBooking;
 using Application.Features.Booking.Command.EditBooking;
 using Application.Features.Booking.Command.UpdateStatusBooking;
+using Application.Features.Booking.Command.UpdateUsageStatus;
 using Application.Features.Booking.Queries.GetAll;
 using Application.Features.Booking.Queries.GetById;
 using Application.Features.Booking.Queries.GetCustomerBooking;
@@ -27,14 +27,19 @@ namespace WebApi.Controllers.V1.Booking
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<GetAllBookingResponse>>> GetAllBookings([FromQuery] GetAllBookingQuery query)
         {
-            return Ok(await Mediator.Send(new GetAllBookingQuery()
+            var result = await Mediator.Send(new GetAllBookingQuery()
             {
+                CustomerId = query.CustomerId,
+                BookingMethod = query.BookingMethod,
+                PaymentStatus = query.PaymentStatus,
+                CinemaId = query.CinemaId,
                 IsExport = query.IsExport,
                 Keyword = query.Keyword,
                 OrderBy = query.OrderBy,
                 PageNumber = query.PageNumber,
                 PageSize = query.PageSize,
-            }));
+            });
+            return result.Succeeded ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -141,6 +146,14 @@ namespace WebApi.Controllers.V1.Booking
                 OrderBy = query.OrderBy,
             });
             return result.Succeeded? Ok(result): BadRequest(result);
+        }
+
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpPatch("update-usage-status")]
+        public async Task<IActionResult> UpdateUsageStatusBooking(UpdateUsageStatusCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
     }
 }

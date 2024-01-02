@@ -7,7 +7,9 @@ namespace Application.Interfaces.Booking
     {
         decimal GetAllTotalMoneyBookingByCustomerId(long id);
         int GetBookingNumberOfTickets(long id);
+        string GetBookingUsageStatus (long id);
         IEnumerable<Domain.Entities.Booking.Booking> GetCurrPrdBookingsByTimeChoice(StatisticsTimeOption TimeOption, DateTime? FromTime, DateTime? ToTime, long CinemaId = 0);
         IEnumerable<Domain.Entities.Booking.Booking> GetPrevPrdBookingsByTimeChoice(StatisticsTimeOption TimeOption, DateTime? FromTime, DateTime? ToTime, long CinemaId = 0);
+        IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByCinemaAsync(long CinemaId);
     }
 }

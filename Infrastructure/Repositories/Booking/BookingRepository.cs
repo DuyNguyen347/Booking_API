@@ -4,6 +4,7 @@ using Domain.Constants;
 using Application.Interfaces;
 using Domain.Constants.Enum;
 using Application.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories.Booking
 {
@@ -173,6 +174,45 @@ namespace Infrastructure.Repositories.Booking
                     (booking, room) => booking.bookingInfo);
 
             return cinemaBookings;
+        }
+
+        public string GetBookingUsageStatus(long id)
+        {
+            DateTime currentTime = _timeZoneService.GetGMT7Time();
+
+            var booking = _dbContext.Bookings.FirstOrDefault(_ =>
+            !_.IsDeleted
+            && _.Id == id);
+
+            if (booking.Status != _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
+                return "unavailable";
+
+            var schedule = _dbContext.Schedules.FirstOrDefault(_ =>
+            !_.IsDeleted
+            && _.Id == booking.ScheduleId
+            && _.StartTime.AddMinutes(30) > currentTime);
+
+            if (schedule != null)
+                return "usable";
+            return "expired";
+        }
+
+        public IEnumerable<Domain.Entities.Booking.Booking> GetBookingsByCinemaAsync(long CinemaId)
+        {
+            var bookings = _dbContext.Bookings.AsQueryable().Where(_ => !_.IsDeleted)
+                .Join(_dbContext.Schedules.AsQueryable().Where(_ => !_.IsDeleted),
+                    booking => booking.ScheduleId,
+                    schedule => schedule.Id,
+                    (booking, schedule) => new
+                    {
+                        bookingInfo = booking,
+                        roomId = schedule.RoomId
+                    })
+                .Join(_dbContext.Room.AsQueryable().Where(_ => !_.IsDeleted && (CinemaId == 0 || _.CinemaId == CinemaId)),
+                    booking => booking.roomId,
+                    room => room.Id,
+                    (booking, room) => booking.bookingInfo);
+            return bookings;
         }
     }
 }

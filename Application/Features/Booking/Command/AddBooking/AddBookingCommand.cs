@@ -21,6 +21,7 @@ using Application.Features.Booking.Command.DeleteBooking;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Threading;
 using Domain.Entities.Booking;
+using Domain.Constants.Enum;
 
 namespace Application.Features.Booking.Command.AddBooking
 {
@@ -82,13 +83,6 @@ namespace Application.Features.Booking.Command.AddBooking
             var existSchedule = await _scheduleRepository.FindAsync(x => x.Id == request.ScheduleId && !x.IsDeleted);
             if (existSchedule == null) return await Result<AddBookingCommand>.FailAsync("NOT_FOUND_SCHEDULE");
 
-            foreach (var NumberSeat in request.NumberSeats)
-            {
-                if (!_seatReservationService.ValidateLock(userId, request.ScheduleId, NumberSeat))
-                    return await Result<AddBookingCommand>.FailAsync("RESERVATION_TIME_OUT");
-            }
-            _seatReservationService.UnlockSeats(userId, request.ScheduleId, request.NumberSeats);
-
             var existTickets = await (from booking in _bookingRepository.Entities
                                       where !booking.IsDeleted && booking.ScheduleId == request.ScheduleId
                                       where booking.Status == _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM)
@@ -97,8 +91,15 @@ namespace Application.Features.Booking.Command.AddBooking
                                       on booking.Id equals ticket.BookingId
                                       where !ticket.IsDeleted && request.NumberSeats.Contains(ticket.NumberSeat)
                                       select ticket).ToListAsync();
-            if (existTickets.Count>0)
+            if (existTickets.Count > 0)
                 return await Result<AddBookingCommand>.FailAsync("EXISTING_BOOKED_NUMBERSEATS");
+
+            foreach (var NumberSeat in request.NumberSeats)
+            {
+                if (!_seatReservationService.ValidateLock(userId, request.ScheduleId, NumberSeat))
+                    return await Result<AddBookingCommand>.FailAsync("RESERVATION_TIME_OUT");
+            }
+            
 
             //open transaction
             var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -109,8 +110,11 @@ namespace Application.Features.Booking.Command.AddBooking
                     CustomerId = userId,
                     ScheduleId = request.ScheduleId
                 };
-                //Them QR CODE
-                //
+
+                if (_currentUserService.RoleName.Equals(RoleConstants.CustomerRole))
+                    booking.BookingMethod = BookingMethod.Online;
+                else
+                    booking.BookingMethod = BookingMethod.Offline;
                 booking.Status = _enumService.GetEnumIdByValue(StaticVariable.WAITING, StaticVariable.BOOKING_STATUS_ENUM);
                 await _bookingRepository.AddAsync(booking);
                 await _unitOfWork.Commit(cancellationToken);
@@ -167,13 +171,16 @@ namespace Application.Features.Booking.Command.AddBooking
                 }
 
                 await _bookingRepository.UpdateAsync(booking);
-                Console.WriteLine(paymentUrl.ToString());
                 await _ticketRepository.AddRangeAsync(tickets);
-                BackgroundJob.Schedule(() => DeleteExpiredBooking(request, new CancellationToken()), TimeSpan.FromMinutes(15));
+
+                _seatReservationService.UnlockSeats(userId, request.ScheduleId, request.NumberSeats);
+
+                BackgroundJob.Schedule(() => DeleteExpiredBooking(request, new CancellationToken()), TimeSpan.FromMinutes(16));
+
                 await _unitOfWork.Commit(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                return await Result<AddBookingCommand>.SuccessAsync(paymentUrl.ToString());
+                return await Result<AddBookingCommand>.SuccessAsync(request, paymentUrl.ToString());
             }
             catch (Exception ex)
             {

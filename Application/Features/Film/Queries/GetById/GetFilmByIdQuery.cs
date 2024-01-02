@@ -47,6 +47,7 @@ namespace Application.Features.Film.Queries.GetById
             var film =  _filmRepository.Entities.Where(x => x.Id == request.Id && !x.IsDeleted).Select(x => new GetFilmByIdReponse()
             {
                 Id = x.Id,
+                Enable = x.Enable,
                 Name = x.Name,
                 Actor = x.Actor,
                 Director = x.Director,

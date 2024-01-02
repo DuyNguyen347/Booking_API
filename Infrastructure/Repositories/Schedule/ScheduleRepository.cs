@@ -42,9 +42,9 @@ namespace Infrastructure.Repositories.Schedule
         public string? GetCinemaName(long scheduleId)
         {
             var cinemaName = (from  schedule in _dbContext.Schedules
-                              where schedule.Id != scheduleId && !schedule.IsDeleted
+                              where schedule.Id == scheduleId && !schedule.IsDeleted
                               join room in _dbContext.Room
-                              on new { Id = schedule.Id, IsDeleted=false } equals new { room.Id, room.IsDeleted }
+                              on new { Id = schedule.RoomId, IsDeleted=false } equals new { room.Id, room.IsDeleted }
                               join cinema in _dbContext.Cinemas
                               on new {Id = room.CinemaId, IsDeleted=false } equals new {cinema.Id, cinema.IsDeleted}
                               select cinema.Name).FirstOrDefault();

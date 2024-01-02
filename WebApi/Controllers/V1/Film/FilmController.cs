@@ -1,6 +1,7 @@
 ﻿using Application.Features.Category.Command.AddCategory;
 using Application.Features.Category.Queries.GetAll;
 using Application.Features.Film.Command.AddFilm;
+using Application.Features.Film.Command.ChangeFilmEnable;
 using Application.Features.Film.Command.DeleteFilm;
 using Application.Features.Film.Command.EditFilm;
 using Application.Features.Film.Queries.GetAll;
@@ -25,7 +26,7 @@ namespace WebApi.Controllers.V1.Film
         /// <returns></returns>
         //[Authorize]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Result<GetFilmByIdReponse>>> GetCategoryById(long id)
+        public async Task<ActionResult<Result<GetFilmByIdReponse>>> GetFilmById(long id)
         {
             return Ok(await Mediator.Send(new GetFilmByIdQuery()
             {
@@ -51,7 +52,7 @@ namespace WebApi.Controllers.V1.Film
         /// <param name="parameter"></param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<PaginatedResult<GetAllFilmResponse>>> GetAllCustomer([FromQuery] GetAllFilmQuery query)
+        public async Task<ActionResult<PaginatedResult<GetAllFilmResponse>>> GetAllFilm([FromQuery] GetAllFilmQuery query)
         {
             return Ok(await Mediator.Send(new GetAllFilmQuery()
             {
@@ -90,6 +91,17 @@ namespace WebApi.Controllers.V1.Film
                 Id = Id
             });
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        }
+
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpPatch("enable")]
+        public async Task<IActionResult> ChangeFilmEnable(long FilmId)
+        {
+            var result = await Mediator.Send(new ChangeFilmEnableCommand 
+            { 
+                FilmId = FilmId 
+            });
+            return result.Succeeded ? Ok(result) : BadRequest(result);
         }
     }
 }

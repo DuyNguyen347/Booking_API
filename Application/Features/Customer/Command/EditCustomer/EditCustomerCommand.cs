@@ -1,8 +1,10 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Customer;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services.Identity;
 using AutoMapper;
 using Domain.Constants;
+using Domain.Constants.Enum;
 using Domain.Entities;
 using Domain.Wrappers;
 using MediatR;
@@ -30,14 +32,22 @@ namespace Application.Features.Customer.Command.EditCustomer
         private readonly ICustomerRepository _customnerRepository;
         private readonly IUnitOfWork<long> _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IUserService _userService;
         private readonly UserManager<AppUser> _userManager;
 
-        public EditCustomerCommandHandler(IMapper mapper, ICustomerRepository customerRepository, IUnitOfWork<long> unitOfWork, ICurrentUserService currentUserService, UserManager<AppUser> userManager)
+        public EditCustomerCommandHandler(
+            IMapper mapper, 
+            ICustomerRepository customerRepository, 
+            IUnitOfWork<long> unitOfWork, 
+            ICurrentUserService currentUserService, 
+            IUserService userService,
+            UserManager<AppUser> userManager)
         {
             _mapper = mapper;
             _customnerRepository = customerRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
+            _userService = userService;
             _userManager = userManager;
         }
 
@@ -69,6 +79,15 @@ namespace Application.Features.Customer.Command.EditCustomer
             await _customnerRepository.UpdateAsync(editCustomer);
             await _unitOfWork.Commit(cancellationToken);
             request.Id = editCustomer.Id;
+
+            await _userService.EditUser(new Dtos.Requests.Identity.EditUserRequest
+            {
+                Id = request.Id,
+                TypeFlag = TypeFlagEnum.Customer,
+                FullName = request.CustomerName,
+                Phone = request.PhoneNumber,
+            });
+
             return await Result<EditCustomerCommand>.SuccessAsync(request);
         }
     }

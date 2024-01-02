@@ -139,7 +139,7 @@ namespace Application.Features.Schedule.Command.AddScheduleMultiTimeSlots
                 var listConflictSchedule = await _scheduleRepository.Entities.Where(x => request.RoomId == x.RoomId && !x.IsDeleted).
                         Where(x => (x.StartTime <= StartTime && StartTime < x.StartTime.AddMinutes(x.Duration)) ||
                         (StartTime <= x.StartTime && x.StartTime < StartTime.AddMinutes(request.Duration))).
-                        Select(x => new ScheduleCommandResponse
+                        Select(x => new ConflictSchedule
                         {
                             Id = x.Id,
                             Duration = x.Duration,
@@ -149,7 +149,22 @@ namespace Application.Features.Schedule.Command.AddScheduleMultiTimeSlots
                             RoomId = x.RoomId,
                             Price = x.Price
                         }).ToListAsync();
-                result.AddRange(listConflictSchedule);
+
+                if (listConflictSchedule.Any())
+                {
+                    var createSchedule = new ScheduleCommandResponse
+                    {
+                        Duration = request.Duration,
+                        Description = request.Description,
+                        StartTime = StartTime,
+                        FilmId = request.FilmId,
+                        RoomId = request.RoomId,
+                        Price = request.Price,
+                        ConflictSchedules = new List<ConflictSchedule>()
+                    };
+                    createSchedule.ConflictSchedules.AddRange(listConflictSchedule);
+                    createSchedule.ConflictSchedules.ForEach(_ => _.FilmName = _scheduleRepository.GetFilmName(_.Id));
+                }
             };
             result.ForEach(_ => _.FilmName = _scheduleRepository.GetFilmName(_.Id));
             return result;
