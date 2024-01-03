@@ -30,6 +30,8 @@ using Application.Interfaces.Cinema;
 using Application.Interfaces.Film;
 using Application.Interfaces.FilmImage;
 using Application.Interfaces.Room;
+using Application.Features.Booking.Queries.GetById;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Application.Features.Payment.Command
 {
@@ -53,6 +55,7 @@ namespace Application.Features.Payment.Command
         private readonly IScheduleRepository _scheduleRepository;
         private readonly IFilmRepository _filmRepository;
         private readonly IRoomRepository _roomRepository;
+        private readonly ITicketRepository _ticketRepository;
 
         public ProcessVnPayReturnCommandHandler(
             IMapper mapper,
@@ -67,6 +70,7 @@ namespace Application.Features.Payment.Command
             IFilmRepository filmRepository,
             IRoomRepository roomRepository,
             ICustomerRepository customerRepository,
+            ITicketRepository ticketRepository,
             UserManager<AppUser> userManager)
         {
             _mapper = mapper;
@@ -82,6 +86,7 @@ namespace Application.Features.Payment.Command
             _filmRepository = filmRepository;
             _roomRepository = roomRepository;
             _scheduleRepository = scheduleRepository;
+            _ticketRepository = ticketRepository;
         }
 
         public async Task<Result<ProcessVnPayReturnResponse>> Handle(ProcessVnPayReturnCommand request, CancellationToken cancellationToken)
@@ -121,84 +126,95 @@ namespace Application.Features.Payment.Command
                         booking.QRCode = qrCodeImageAsBase64;
                         await _bookingRepository.UpdateAsync(booking);
                         await _unitOfWork.Commit(cancellationToken);
-                      
-                        try
+
+                        var CustomerBooking = await _customerRepository.Entities.Where(_ => _.Id == booking.CustomerId).Select(s => new Domain.Entities.Customer.Customer
                         {
-                            var CustomerBooking = await _customerRepository.Entities.Where(_ => _.Id == booking.CustomerId).Select(s => new                               Domain.Entities.Customer.Customer
-                            {
-                                Id = s.Id,
-                                CustomerName = s.CustomerName,
-                                PhoneNumber = s.PhoneNumber,
-                            }).FirstOrDefaultAsync();
+                            Id = s.Id,
+                            CustomerName = s.CustomerName,
+                            PhoneNumber = s.PhoneNumber,
+                            Email = s.Email
+                        }).FirstOrDefaultAsync();
 
-                            var bookingInfo = await (from schedule in _scheduleRepository.Entities
-                                                     where !schedule.IsDeleted && schedule.Id == booking.ScheduleId
-                            join room in _roomRepository.Entities
-                                                     on schedule.RoomId equals room.Id
-                                                     join cinema in _cinemaRepository.Entities
-                                                     on room.CinemaId equals cinema.Id
-                                                     join film in _filmRepository.Entities
-                                                     on schedule.FilmId equals film.Id
-                                                     where !room.IsDeleted && !cinema.IsDeleted && !film.IsDeleted
-                                                     select new
-                                                     {
-                                                         CinemaName = cinema.Name,
-                                                         RoomName = room.Name,
-                                                         FilmName = film.Name,
-                                                         StartTime = schedule.StartTime,
-                                                     }).FirstOrDefaultAsync();
-
-                            var bodyhtml = $@"<!DOCTYPE html>
-                            <html lang=""en"">
-                            <head>
-                                <meta charset=""UTF-8"">
-                                <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-                                <title>Vé Đặt Lịch Xem Phim - Cinephile</title>
-                                <style>
-                                    body {{
-                                        font-family: Arial, sans-serif;
-                                        margin: 20px;
-                                    }}
-
-                                    .ticket {{
-                                        border: 1px solid #ccc;
-                                        padding: 20px;
-                                        max-width: 400px;
-                                        margin: 0 auto;
-                                    }}
-
-                                    .ticket img {{
-                                        max-width: 100%;
-                                        height: auto;
-                                        margin-top: 10px;
-                                    }}
-                                </style>
-                            </head>
-                            <body>
-                                <div class=""ticket"">
-                                    <h2>Cinephile - Vé Đặt Lịch Xem Phim</h2>
-                                    <p><strong>Rạp Chiếu:</strong> {bookingInfo.CinemaName}</p>
-                                    <p><strong>Phòng Chiếu:</strong> {bookingInfo.RoomName}</p>
-                                    <p><strong>Số Ghế:</strong>A1,A3</p>
-                                    <p><strong>Tên Phim:</strong> {bookingInfo.FilmName}</p>
-                                    <p><strong>Thời Gian Chiếu:</strong> {bookingInfo.StartTime}</p>
-                                    <p><strong>Mã QR:</strong></p>
-                                    <img src=""data:image/png;base64,{qrCodeImageAsBase64}"" alt=""QR Code"">
-                                    <p>Vui lòng đem mã QR nay khi đến rạp chiếu phim</strong></p>
-                                </div>
-                            </body>
-                            </html>";
-
-                            var email = new EmailRequest()
-                            {
-                                Body = bodyhtml,
-                                Subject = "Xác nhận thanh toán vé xem phim thành công",
-                                To = "ducduynguyen347@gmail.com"
-                            };
-                            BackgroundJob.Enqueue(() => _mailService.SendAsync(email));
-                        } catch(Exception ex)
+                        if (booking.BookingMethod == BookingMethod.Online && CustomerBooking != null && CustomerBooking.Email != null)
                         {
-                            Console.WriteLine("err when send email: ", ex.Message);
+                            try
+                            {
+                                var bookingInfo = await (from schedule in _scheduleRepository.Entities
+                                                         where !schedule.IsDeleted && schedule.Id == booking.ScheduleId
+                                join room in _roomRepository.Entities
+                                                         on schedule.RoomId equals room.Id
+                                                         join cinema in _cinemaRepository.Entities
+                                                         on room.CinemaId equals cinema.Id
+                                                         join film in _filmRepository.Entities
+                                                         on schedule.FilmId equals film.Id
+                                                         where !room.IsDeleted && !cinema.IsDeleted && !film.IsDeleted
+                                                         select new
+                                                         {
+                                                             CinemaName = cinema.Name,
+                                                             RoomName = room.Name,
+                                                             FilmName = film.Name,
+                                                             StartTime = schedule.StartTime,
+                                                         }).FirstOrDefaultAsync();
+
+                                List<string> bookingTickets = await _ticketRepository.Entities
+                                    .Where(_ => _.BookingId == booking.Id && !_.IsDeleted)
+                                    .Select(s => s.SeatCode).ToListAsync();
+
+                                string seatcode = string.Join(", ", bookingTickets);
+
+                                var bodyhtml = $@"<!DOCTYPE html>
+                                <html lang=""en"">
+                                <head>
+                                    <meta charset=""UTF-8"">
+                                    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+                                    <title>Vé Đặt Lịch Xem Phim - Cinephile</title>
+                                    <style>
+                                        body {{
+                                            font-family: Arial, sans-serif;
+                                            margin: 20px;
+                                        }}
+
+                                        .ticket {{
+                                            border: 1px solid #ccc;
+                                            padding: 20px;
+                                            max-width: 400px;
+                                            margin: 0 auto;
+                                        }}
+
+                                        .ticket img {{
+                                            max-width: 100%;
+                                            height: auto;
+                                            margin-top: 10px;
+                                        }}
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class=""ticket"">
+                                        <h2>Cinephile - Vé Đặt Lịch Xem Phim</h2>
+                                        <p><strong>Mã đặt vé:</strong> {booking.BookingRefId}</p>
+                                        <p><strong>Rạp Chiếu:</strong> {bookingInfo.CinemaName}</p>
+                                        <p><strong>Phòng Chiếu:</strong> {bookingInfo.RoomName}</p>
+                                        <p><strong>Số Ghế:</strong>{seatcode}</p>
+                                        <p><strong>Tên Phim:</strong> {bookingInfo.FilmName}</p>
+                                        <p><strong>Thời Gian Chiếu:</strong> {bookingInfo.StartTime}</p>
+                                        <p><strong>Mã QR:</strong></p>
+                                        <img src=""data:image/png;base64,{qrCodeImageAsBase64}"" alt=""QR Code"">
+                                        <p>Vui lòng đem mã QR nay khi đến rạp chiếu phim</strong></p>
+                                    </div>
+                                </body>
+                                </html>";
+
+                                var email = new EmailRequest()
+                                {
+                                    Body = bodyhtml,
+                                    Subject = "Xác nhận thanh toán vé xem phim thành công",
+                                    To = CustomerBooking.Email
+                                };
+                                BackgroundJob.Enqueue(() => _mailService.SendAsync(email));
+                            } catch(Exception ex)
+                            {
+                                Console.WriteLine("err when send email: ", ex.Message);
+                            }
                         }
                         
                         return await Result<ProcessVnPayReturnResponse>.SuccessAsync(result, returnUrl);

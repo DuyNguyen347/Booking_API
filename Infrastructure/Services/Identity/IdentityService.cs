@@ -37,7 +37,10 @@ namespace Infrastructure.Services.Identity
             {
                 return await Result<TokenResponse>.FailAsync("Incorrect username/email or password.");
             }
-
+            if(user.EmailConfirmed == false)
+            {
+                return await Result<TokenResponse>.FailAsync("Please confirm email.");
+            }
             user.RefreshToken = GenerateRefreshToken();
             user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
             await _userManager.UpdateAsync(user);
