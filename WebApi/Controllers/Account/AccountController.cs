@@ -93,13 +93,13 @@ namespace WebApi.Controllers.Account
         /// </summary>
         [Authorize(Roles = RoleConstants.AdministratorRole)]
         [HttpGet("admin-confirm-email")]
-        public async Task<IActionResult> ConfirmEmailAdmin(string email)
+        public async Task<IActionResult> ConfirmEmailAdmin(string employeeNo)
         {
-            if (string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(employeeNo))
             {
-                return BadRequest("REQUIRED_EMAIL");
+                return BadRequest("REQUIRED_EMAIL_OR_USERNAME");
             }
-            var result = await _userService.ConfirmEmailAdmin(email);
+            var result = await _userService.ConfirmEmailAdmin(employeeNo);
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
     }
