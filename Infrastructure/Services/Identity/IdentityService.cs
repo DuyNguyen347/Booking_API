@@ -27,17 +27,20 @@ namespace Infrastructure.Services.Identity
 
         public async Task<Result<TokenResponse>> LoginAsync(TokenRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.EmployeeNo);
+            var user = await _userManager.FindByNameAsync(model.EmployeeNo) ?? await _userManager.FindByEmailAsync(model.EmployeeNo);
             if (user == null)
             {
-                return await Result<TokenResponse>.FailAsync("Incorrect username or password.");
+                return await Result<TokenResponse>.FailAsync("Incorrect username/email or password.");
             }
             var passwordValid = await _userManager.CheckPasswordAsync(user, model.Password);
             if (!passwordValid)
             {
-                return await Result<TokenResponse>.FailAsync("Incorrect username or password.");
+                return await Result<TokenResponse>.FailAsync("Incorrect username/email or password.");
             }
-
+            if(user.EmailConfirmed == false)
+            {
+                return await Result<TokenResponse>.FailAsync("Please confirm email.");
+            }
             user.RefreshToken = GenerateRefreshToken();
             user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
             await _userManager.UpdateAsync(user);

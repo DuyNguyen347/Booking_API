@@ -28,5 +28,7 @@ namespace Domain.Entities.Customer
         [Column("discount",TypeName = "int")]
         public int Discount { get; set; }
 
+        [Column("email", TypeName = "nvarchar(100)")]
+        public string Email { get; set; }
     }
 }

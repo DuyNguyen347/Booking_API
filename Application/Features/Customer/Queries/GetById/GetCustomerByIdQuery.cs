@@ -41,6 +41,7 @@ namespace Application.Features.Customer.Queries.GetById
                                   select new GetCustomerByIdResponse()
                                   {
                                       CustomerName = e.CustomerName,
+                                      Email = e.Email,
                                       PhoneNumber = e.PhoneNumber,
                                       Address = e.Address,
                                       DateOfBirth = e.DateOfBirth,
