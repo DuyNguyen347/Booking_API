@@ -141,7 +141,7 @@ namespace Infrastructure.Services.Identity
 
         public async Task<IResult> ConfirmEmailAdmin(string email)
         {
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await _userManager.FindByEmailAsync(email) ?? await _userManager.FindByNameAsync(email);
             if (user != null)
             {
                 user.EmailConfirmed = true;
