@@ -84,7 +84,7 @@ namespace WebApi.Controllers.Account
             var merchant = await _merchantRepository.Entities.FirstOrDefaultAsync();
             if (merchant == null) return BadRequest("NOT_FOUND_MERCHANT");
             var result = await _userService.ConfirmEmail(token, email);
-            return (result.Succeeded) ? Redirect($"{merchant.MerchantWebLink}/confirmEmail") : BadRequest(result);
+            return (result.Succeeded) ? Redirect($"{merchant.MerchantWebLink}/confirm-email-success") : BadRequest(result);
         }
 
 
