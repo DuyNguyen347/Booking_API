@@ -52,7 +52,12 @@ namespace Infrastructure.Services.Identity
             //var str = new StreamReader(filePath);
             //var mailText = await str.ReadToEndAsync();
             //str.Close();
-            var passwordResetUrl = QueryHelpers.AddQueryString(endpointUri.ToString(), "Token", code);
+            var queryString = new Dictionary<string, string?>
+            {
+                {"token", code},
+                {"email", request.Email}
+            };
+            var passwordResetUrl = QueryHelpers.AddQueryString(endpointUri.ToString(), queryString);
 
             //var logo = $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host.Value}/logo/logo-nineplus.png";
             //var mailBody = mailText.Replace("[EndPointUrl]", HtmlEncoder.Default.Encode(passwordResetUrl)).Replace("[Logo]", logo);
