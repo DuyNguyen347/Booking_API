@@ -26,7 +26,7 @@ namespace Application.Features.Customer.Queries.GetAll
             if (request.Keyword != null)
                 request.Keyword = request.Keyword.Trim();
 
-            Console.WriteLine("url link: ", _httpContextAccessor.HttpContext.Request);
+            Console.WriteLine("url link: "+ _httpContextAccessor.HttpContext.Request.Host.ToString());
             var query = _CustomerRepository.Entities.AsEnumerable()
                         .Where(x => !x.IsDeleted 
                                 && (string.IsNullOrEmpty(request.Keyword) 

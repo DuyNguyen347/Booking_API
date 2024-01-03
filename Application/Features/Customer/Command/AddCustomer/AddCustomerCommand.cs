@@ -20,7 +20,11 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-
+using Application.Interfaces;
+using static QRCoder.PayloadGenerator;
+using Application.Interfaces.Services;
+using Application.Dtos.Requests.SendEmail;
+using Hangfire;
 
 namespace Application.Features.Customer.Command.AddCustomer
 {
@@ -48,9 +52,11 @@ namespace Application.Features.Customer.Command.AddCustomer
         private readonly IAccountService _accountService;
         private readonly UserManager<AppUser> _usermanager;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IEmailService _mailService;
 
 
-        public AddCustomerCommandHandler(IMapper mapper, ICustomerRepository customerRepository, IUnitOfWork<long> unitOfWork, IAccountService accountService, UserManager<AppUser> usermanager,IHttpContextAccessor httpContext)
+        public AddCustomerCommandHandler(IMapper mapper, ICustomerRepository customerRepository, IUnitOfWork<long> unitOfWork, IAccountService accountService, UserManager<AppUser> usermanager,IHttpContextAccessor httpContext, ICurrentUserService currentUserService, IEmailService mailService)
         {
             _mapper = mapper;
             _customnerRepository = customerRepository;
@@ -58,6 +64,8 @@ namespace Application.Features.Customer.Command.AddCustomer
             _accountService = accountService;
             _usermanager = usermanager;
             _httpContextAccessor = httpContext;
+            _currentUserService = currentUserService;
+            _mailService = mailService;
         }
 
         public async Task<Result<AddCustomerCommand>> Handle(AddCustomerCommand request, CancellationToken cancellationToken)
@@ -90,6 +98,7 @@ namespace Application.Features.Customer.Command.AddCustomer
                 {
                     FullName = request.CustomerName,
                     UserName = request.Username,
+                    Email = request.Email,
                     EmailConfirmed = false,
                     PhoneNumber = request.PhoneNumber,
                     PhoneNumberConfirmed = true,
@@ -106,11 +115,23 @@ namespace Application.Features.Customer.Command.AddCustomer
                 var tokenConfirmEmail = await _usermanager.GenerateEmailConfirmationTokenAsync(user);
                 
 
-                Console.WriteLine("url link: ", _httpContextAccessor.HttpContext.Request);
+                //Console.WriteLine("url link: ", _httpContextAccessor.HttpContext.Request);
+                var urlConfirmEmail = new UriBuilder(_currentUserService.HostServerName + "/api/account/confirm-email");
+                urlConfirmEmail.Query = $"token={tokenConfirmEmail}&email={request.Email}";
+
+                string finalUrlConfirmEmail = urlConfirmEmail.ToString();
+
+                var email = new EmailRequest()
+                {
+                    Body = "Vui lòng nhấn link sau để xác thực email: " + finalUrlConfirmEmail,
+                    Subject = "Xác thực email",
+                    To = request.Email,
+                };
+                BackgroundJob.Enqueue(() => _mailService.SendAsync(email));
                 // generate token confirm email
                 //var token = awa
 
-                return await Result<AddCustomerCommand>.SuccessAsync(request);
+                return await Result<AddCustomerCommand>.SuccessAsync(request,finalUrlConfirmEmail);
             }
             await _customnerRepository.AddAsync(addCustomer);
             await _unitOfWork.Commit(cancellationToken);

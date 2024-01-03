@@ -11,5 +11,6 @@ namespace Application.Interfaces.Services.Identity
 
         Task<IResult> DeleteUser(DeleteUserRequest request);
         Task<IResult> EditUser(EditUserRequest request);
+        Task<IResult> ConfirmEmail(string token, string email);
     }
 }

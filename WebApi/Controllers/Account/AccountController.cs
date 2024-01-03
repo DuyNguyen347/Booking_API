@@ -61,5 +61,21 @@ namespace WebApi.Controllers.Account
             var result = await _userService.ResetPasswordAsync(request);    
             return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
+
+        /// <summary>
+        /// Confirm Email
+        /// </summary>
+        [HttpGet("confirm-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmEmail(string token, string email)
+        {
+            token = token.Replace(" ", "+");
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+            {
+                return BadRequest("REQUIRED_TOKEN_AND_EMAIL");
+            }
+            var result = await _userService.ConfirmEmail(token, email);
+            return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        }
     }
 }

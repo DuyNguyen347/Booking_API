@@ -123,5 +123,20 @@ namespace Infrastructure.Services.Identity
             }
             return await Result.FailAsync("System Error");
         }
+
+        public async Task<IResult> ConfirmEmail(string token,string email)
+        {
+            Console.WriteLine("confirm email");
+            var user = await _userManager.FindByEmailAsync(email);
+            if(user != null)
+            {
+                var result = await _userManager.ConfirmEmailAsync(user, token);
+                if (result.Succeeded)
+                {
+                    return await Result.SuccessAsync();
+                }
+            }
+            return await Result.FailAsync("System Error");
+        }
     }
 }
