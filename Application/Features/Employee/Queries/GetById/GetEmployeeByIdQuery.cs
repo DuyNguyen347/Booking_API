@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Employee;
 using Domain.Constants;
+using Domain.Constants.Enum;
 using Domain.Entities;
 using Domain.Wrappers;
 using MediatR;
@@ -46,7 +47,9 @@ namespace Application.Features.Employee.Queries.GetById
                                       UserName = _userManager.Users.Where(e => e.UserId == request.Id && !e.IsDeleted).Select(e => e.UserName).FirstOrDefault()
                                   }).FirstOrDefaultAsync(cancellationToken: cancellationToken);
             if (employee == null) return await Result<GetEmployeeByIdResponse>.FailAsync(StaticVariable.NOT_FOUND_MSG);
-
+            var account = await _userManager.Users.Where(x => !x.IsDeleted && x.UserId == employee.Id && x.TypeFlag == TypeFlagEnum.Employee).FirstOrDefaultAsync();
+            var role = await _userManager.GetRolesAsync(account);
+            employee.isAdmin = (role[0] == "Superadmin") ? true : false;
             return await Result<GetEmployeeByIdResponse>.SuccessAsync(employee);
         }
     }
