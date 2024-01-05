@@ -12,5 +12,6 @@
         public DateTime? LastModifiedOn { get; set; }
         public string? ImageFile { get; set; }
         public string? ImageLink { get; set; }
+        public bool IsAdmin { get; set; }
     }
 }
