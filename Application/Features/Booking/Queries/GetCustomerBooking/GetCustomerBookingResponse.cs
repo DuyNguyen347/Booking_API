@@ -4,21 +4,15 @@ namespace Application.Features.Booking.Queries.GetCustomerBooking
 {
     public class GetCustomerBookingResponse
     {
-        public long BookingId { get; set; }
-        public DateTime BookingDate { get; set; }
-        public DateTime FromTime { get; set; }
-        public DateTime ToTime { get; set; }
-        public int? BookingStatus { get; set; }
+        public long Id { get; set; }
+        public string? BookingRefId { get; set; }
+        public DateTime? BookingDate { get; set; }
+        public string? FilmName { get; set; }
+        public string? CinemaName {  get; set; }
+        public decimal? TotalPrice {  get; set; }
+        public string? BookingCurrency { get; set; }
+        public string? UsageStatus {  get; set; }
+        public DateTime CreatedOn { get; set; }
         public DateTime? LastModifiedOn { get; set; }
-        public List<BookingDetailResponse> bookingDetailResponses { get; set; } = new List<BookingDetailResponse>();
-    }
-    public class BookingDetailResponse
-    {
-        public long BookingDetailId { get; set; }
-        public long ServiceId { get; set; }
-        public string ServiceName { get; set; }
-        public string? ServiceDescription { get; set; }
-        public decimal ServicePrice { get; set; }
-        public List<ServiceImageResponse> ServiceImages { get; set; }
     }
 }

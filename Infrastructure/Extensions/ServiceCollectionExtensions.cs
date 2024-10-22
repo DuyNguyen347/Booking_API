@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.Payment;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Account;
@@ -7,6 +8,7 @@ using Infrastructure.Contexts;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Infrastructure.Services.Identity;
+using Infrastructure.Services.Payment.VnPay.Request;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +45,9 @@ namespace Infrastructure.Extensions
             services.AddScoped<ICheckFileType, CheckFileType>();
             services.AddScoped<ICheckSizeFile, CheckFileSize>();
             services.AddScoped<IEnumService, EnumService>();
+            services.AddSingleton<ISeatReservationService, SeatReservationService>();
+            services.AddScoped<IVnPayService, VnPayService>();
+            services.AddScoped<ITimeZoneService, TimeZoneService>();
         }
 
         public static void AddRepositories(this IServiceCollection services)
@@ -61,6 +66,19 @@ namespace Infrastructure.Extensions
             services.AddViewCustomerReviewHistoryRepository();
             services.AddFeedbackFileUploadRepository();
             services.AddEnumMasterDataRepository();
+            services.AddCategoryRepository();
+            services.AddFilmImageRepository();
+            services.AddFilmRepository();
+            services.AddCategoryFilmRepository();
+            services.AddScheduleRepository();
+            services.AddCinemaRepository();
+            services.AddRoomRepository();
+            services.AddSeatRepository();
+            services.AddTicketRepository();
+            services.AddMerchantRepository();
+            services.AddReviewRepository();
+            services.AddPosterRepository();
+            services.AddCinemaImageRepository();
         }
 
     }

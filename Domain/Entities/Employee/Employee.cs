@@ -9,7 +9,7 @@ namespace Domain.Entities.Employee
     {
         [Required]
         [Column("name", TypeName = "nvarchar(100)")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [Column("gender", TypeName = "bit")]
         public bool? Gender { get; set; }
@@ -19,14 +19,14 @@ namespace Domain.Entities.Employee
 
         [Required]
         [Column("phone_number", TypeName = "varchar(10)")]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [Column("address", TypeName = "nvarchar(500)")]
         public string? Address { get; set; }
 
         [Required]
         [Column("email", TypeName = "nvarchar(100)")]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [Column("image", TypeName = "nvarchar(MAX)")]
         public string? Image { get; set; }
@@ -35,5 +35,11 @@ namespace Domain.Entities.Employee
         [Column("work_shift_id", TypeName = "bigint")]
         public long WorkShiftId { get; set; }
 
+        [Required]
+        [Column("position_id", TypeName = "bigint")]
+        public long PositionID { get; set; }
+
+        [Column("salary",TypeName = "bigint")]
+        public long Salary { get; set; }
     }
 }

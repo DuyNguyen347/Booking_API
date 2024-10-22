@@ -3,6 +3,7 @@ using Domain.Entities.Employee;
 using Domain.Entities.Service;
 using Hangfire;
 using Infrastructure.Extensions;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.Extensions.FileProviders;
 using Serilog;
 using Shared.Extensions;
@@ -46,6 +47,14 @@ try
 
     builder.Services.AddLazyCache();
 
+    //builder.Services.AddHttpLogging(logging =>
+    //{
+    //    logging.LoggingFields = HttpLoggingFields.All;
+    //    logging.MediaTypeOptions.AddText("application/x-www-form-urlencoded");
+    //});
+    builder.Services.AddLogging(builder.Configuration);
+    builder.Services.AddHttpClient();
+
     //authorize
     builder.Services.AddAuthorization(options =>
     {
@@ -68,6 +77,7 @@ try
 
     var app = builder.Build();
 
+    app.UseHttpLogging();
     app.UseRouting();
 
     app.UseStaticFiles();

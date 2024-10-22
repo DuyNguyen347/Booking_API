@@ -1,11 +1,12 @@
 using Domain.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Domain.Constants.Enum;
-using Application.Features.Statistics.Queries.GetInsightMetrics;
-using Application.Features.Statistics.Queries.GetOverview;
-using Application.Features.Statistics.Queries.GetOustandingService;
 using Domain.Constants;
+using Application.Features.Statistics.Queries.GetFilmStatistic;
+using Application.Features.Statistics.Queries.GetCinemaStatistic;
+using Application.Features.Statistics.Queries.GetDaytimeRangesStatistic;
+using Application.Features.Statistics.Queries.GetStatisticByTimeStep;
+using Application.Features.Statistics.Queries.GetOverview;
 
 namespace WebApi.Controllers.V1.Statistics
 {
@@ -14,45 +15,100 @@ namespace WebApi.Controllers.V1.Statistics
     public class StatisticsController : BaseApiController<StatisticsController>
     {
         /// <summary>
-        /// Get Insight Metrics
+        /// Get film statistic
         /// </summary>
-        /// <param name="statisticsTime"></param>
+        /// <param name="TimeOption">Time option, 0: today, 1: this week, 2: this month, 3: this year, 4: custom time</param>
+        /// <param name="FromTime">if TimeOption is 4; fill this field</param>
+        /// <param name="ToTime">if TimeOption is 4; fill this field</param>
         /// <returns></returns>
-        [Authorize(Roles = RoleConstants.AdministratorRole)]
-        [HttpGet("insight-metrics")]
-        public async Task<ActionResult<Result<GetInsightMetricsResponse>>> GetInsightMetrics(StatisticsTime statisticsTime)
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpGet("film")]
+        public async Task<ActionResult<PaginatedResult<GetFilmStatisticResponse>>> GetFilmStatistic([FromQuery] GetFilmStatisticQuery query)
         {
-            return Ok(await Mediator.Send(new GetInsightMetricsQuery()
+            return Ok(await Mediator.Send(new GetFilmStatisticQuery
             {
-                statisticsTime = statisticsTime
+                TimeOption = query.TimeOption,
+                FromTime = query.FromTime,
+                ToTime = query.ToTime,
+                FilmId = query.FilmId,
+                CinemaId = query.CinemaId,
+                IsExport = query.IsExport,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize,
+                Keyword = query.Keyword,
+                OrderBy = query.OrderBy,
             }));
         }
+
+
         /// <summary>
-        /// Get Overview
+        /// Get cinema statistic
         /// </summary>
-        /// <param name="statisticsTime"></param>
+        /// <param name="TimeOption">Time option, 0: today, 1: this week, 2: this month, 3: this year, 4: custom time</param>
+        /// <param name="FromTime">if TimeOption is 4; fill this field</param>
+        /// <param name="ToTime">if TimeOption is 4; fill this field</param>
         /// <returns></returns>
-        [Authorize(Roles = RoleConstants.AdministratorRole)]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpGet("cinema")]
+        public async Task<ActionResult<PaginatedResult<GetCinemaStatisticResponse>>> GetCinemaStatistic([FromQuery] GetCinemaStatisticQuery query)
+        {
+            return Ok(await Mediator.Send(new GetCinemaStatisticQuery
+            {
+                TimeOption = query.TimeOption,
+                FromTime = query.FromTime,
+                ToTime = query.ToTime,
+                CinemaId = query.CinemaId,
+                IsExport = query.IsExport,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize,
+                Keyword = query.Keyword,
+                OrderBy = query.OrderBy,
+            }));
+        }
+
+
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpGet("daytime-ranges")]
+        public async Task<ActionResult<Result<List<GetDaytimeRangesStatisticResponse>>>> GetDaytimeRangesStatistic([FromQuery] GetDaytimeRangesStatisticQuery query)
+        {
+            return Ok(await Mediator.Send(new GetDaytimeRangesStatisticQuery
+            {
+                TimeOption = query.TimeOption,
+                FromTime = query.FromTime,
+                ToTime = query.ToTime,
+                OrderBy = query.OrderBy
+            }));
+        }
+
+
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpGet("time-step")]
+        public async Task<ActionResult<PaginatedResult<GetStatisticByTimeStepResponse>>> GetStatisticByTimeStep([FromQuery] GetStatisticByTimeStepQuery query)
+        {
+            var result = await Mediator.Send(new GetStatisticByTimeStepQuery
+            {
+                TimeStep = query.TimeStep,
+                IsExport = query.IsExport,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize,
+                CinemaId = query.CinemaId,
+            });
+            return result.Succeeded ? Ok(result) : BadRequest(result);
+        }
+
+
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpGet("overview")]
-        public async Task<ActionResult<Result<List<GetOverviewResponse>>>> GetOverView(StatisticsTime statisticsTime)
+        public async Task<ActionResult<Result<GetOverviewResponse>>> GetOverview([FromQuery] GetOverviewQuery query)
         {
-            return Ok(await Mediator.Send(new GetOverviewQuery()
+            var result = await Mediator.Send(new GetOverviewQuery
             {
-                statisticsTime = statisticsTime
-            }));
-        }
-        /// <summary>
-        /// Get Outstanding service
-        /// </summary>
-        /// <param name=""></param>
-        /// <returns></returns>
-        [Authorize(Roles = RoleConstants.AdministratorRole)]
-        [HttpGet("outstanding-service")]
-        public async Task<ActionResult<Result<List<GetOverviewResponse>>>> GetOutstandingService()
-        {
-            return Ok(await Mediator.Send(new GetOutstandingServiceQuery()
-            {
-            }));
+                TimeOption = query.TimeOption,
+                FromTime = query.FromTime,
+                ToTime = query.ToTime,
+                CinemaId = query.CinemaId,
+            });
+            return result.Succeeded ? Ok(result) : BadRequest(result);
         }
     }
 }

@@ -13,5 +13,6 @@ namespace Application.Features.Employee.Queries.GetById
         public string? ImageLink { get; set; }
         public string? UserName { get; set; }
         public long WorkShiftId { get; set; }
+        public bool isAdmin { get; set; }
     }
 }

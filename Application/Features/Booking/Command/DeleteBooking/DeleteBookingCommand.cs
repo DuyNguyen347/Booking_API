@@ -4,11 +4,13 @@ using Application.Interfaces.Booking;
 using Application.Interfaces.BookingDetail;
 using Application.Interfaces.Customer;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Ticket;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Wrappers;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Booking.Command.DeleteBooking
 {
@@ -21,7 +23,7 @@ namespace Application.Features.Booking.Command.DeleteBooking
     {
         private readonly IUnitOfWork<long> _unitOfWork;
         private readonly IBookingRepository _bookingRepository;
-        private readonly IBookingDetailRepository _bookingDetailRepository;
+        private readonly ITicketRepository _ticketRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IEnumService _enumService;
         private readonly ICurrentUserService _currentUserService;
@@ -32,11 +34,13 @@ namespace Application.Features.Booking.Command.DeleteBooking
             IBookingRepository bookingRepository,
             ICustomerRepository customerRepository,
             IEnumService enumService,
-            IBookingDetailRepository bookingDetailRepository, ICurrentUserService currentUserService, UserManager<AppUser> userManager)
+            ITicketRepository ticketRepository, 
+            ICurrentUserService currentUserService, 
+            UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _bookingRepository = bookingRepository;
-            _bookingDetailRepository = bookingDetailRepository;
+            _ticketRepository = ticketRepository;
             _customerRepository = customerRepository;
             _enumService = enumService;
             _currentUserService = currentUserService;
@@ -58,31 +62,19 @@ namespace Application.Features.Booking.Command.DeleteBooking
                         return await Result<long>.FailAsync(StaticVariable.NOT_HAVE_ACCESS);
                 }
 
-                if (!(booking.Status == _enumService.GetEnumIdByValue(StaticVariable.INPROGRESSING, StaticVariable.BOOKING_STATUS_ENUM)))
+                if (booking.Status != _enumService.GetEnumIdByValue(StaticVariable.DONE, StaticVariable.BOOKING_STATUS_ENUM))
                 {
-                    var bookingDetail = await _bookingDetailRepository.GetByCondition(x => x.BookingId == request.Id && !x.IsDeleted);
-                    if (bookingDetail == null) return await Result<long>.FailAsync(StaticVariable.NOT_FOUND_MSG);
-
+                    var tickets = await (from ticket in _ticketRepository.Entities
+                                         where !ticket.IsDeleted && ticket.BookingId == booking.Id
+                                         select ticket).ToListAsync();
+                    await _ticketRepository.DeleteRange(tickets);
                     await _bookingRepository.DeleteAsync(booking);
-
-                    await _bookingDetailRepository.DeleteRange(bookingDetail.ToList());
-
                     await _unitOfWork.Commit(cancellationToken);
-
-                    Domain.Entities.Customer.Customer ExistCustomer = await _customerRepository.FindAsync(_ => _.Id == booking.CustomerId && !_.IsDeleted);
-
-                    if (ExistCustomer != null)
-                    {
-                        ExistCustomer.TotalMoney = _bookingRepository.GetAllTotalMoneyBookingByCustomerId(ExistCustomer.Id);
-                        await _customerRepository.UpdateAsync(ExistCustomer);
-                        await _unitOfWork.Commit(cancellationToken);
-                    }
-
                     await transaction.CommitAsync(cancellationToken);
-                    return await Result<long>.SuccessAsync(request.Id, $"Delete booking and booking detail by booking id {request.Id} successfully!");
+
+                    return await Result<long>.SuccessAsync($"BOOKING_{request.Id}_DELETED_SUCCESSFULLY");
                 }
-                
-                return await Result<long>.FailAsync("Booking is inprogress");
+                return await Result<long>.FailAsync("PURCHASED_BOOKING");
             }
             catch (Exception ex)
             {

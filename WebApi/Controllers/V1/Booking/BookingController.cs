@@ -2,6 +2,7 @@ using Application.Features.Booking.Command.AddBooking;
 using Application.Features.Booking.Command.DeleteBooking;
 using Application.Features.Booking.Command.EditBooking;
 using Application.Features.Booking.Command.UpdateStatusBooking;
+using Application.Features.Booking.Command.UpdateUsageStatus;
 using Application.Features.Booking.Queries.GetAll;
 using Application.Features.Booking.Queries.GetById;
 using Application.Features.Booking.Queries.GetCustomerBooking;
@@ -22,22 +23,23 @@ namespace WebApi.Controllers.V1.Booking
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        [Authorize(Roles = RoleConstants.AdministratorRole)]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<GetAllBookingResponse>>> GetAllBookings([FromQuery] GetAllBookingQuery query)
         {
-            return Ok(await Mediator.Send(new GetAllBookingQuery()
+            var result = await Mediator.Send(new GetAllBookingQuery()
             {
+                CustomerId = query.CustomerId,
+                BookingMethod = query.BookingMethod,
+                PaymentStatus = query.PaymentStatus,
+                CinemaId = query.CinemaId,
                 IsExport = query.IsExport,
                 Keyword = query.Keyword,
                 OrderBy = query.OrderBy,
                 PageNumber = query.PageNumber,
                 PageSize = query.PageSize,
-                BookingDate = query.BookingDate,
-                FromTime = query.FromTime,
-                ToTime = query.ToTime,
-                Status = query.Status
-            }));
+            });
+            return result.Succeeded ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -59,14 +61,14 @@ namespace WebApi.Controllers.V1.Booking
         /// <param name="Id"></param>
         /// <returns></returns>
         [Authorize]
-        [HttpGet("{Id}")]
-        public async Task<IActionResult> BookingDetail(long Id)
-        {
+        [HttpGet("{paymentId}")]
+        public async Task<ActionResult<Result<GetBookingByIdResponse>>> BookingDetail(string paymentId)
+        {   
             var result = await Mediator.Send(new GetBookingByIdQuery
             {
-                Id = Id
+                PaymentId = paymentId
             });
-            return Ok(result);
+            return result.Succeeded ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
@@ -74,36 +76,36 @@ namespace WebApi.Controllers.V1.Booking
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [Authorize]
-        [HttpDelete]
-        public async Task<IActionResult> DeleteBooking(short id)
-        {
-            var result = await Mediator.Send(new DeleteBookingCommand
-            {
-                Id = id
-            });
-            return (result.Succeeded) ? Ok(result) : BadRequest(result);
-        }
+        //[Authorize]
+        //[HttpDelete]
+        //public async Task<IActionResult> DeleteBooking(short id)
+        //{
+        //    var result = await Mediator.Send(new DeleteBookingCommand
+        //    {
+        //        Id = id
+        //    });
+        //    return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        //}
 
         /// <summary>
         /// Edit Booking
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        [Authorize]
-        [HttpPut]
-        public async Task<IActionResult> EditBooking(EditBookingCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return (result.Succeeded) ? Ok(result) : BadRequest(result);
-        }
+        //[Authorize]
+        //[HttpPut]
+        //public async Task<IActionResult> EditBooking(EditBookingCommand command)
+        //{
+        //    var result = await Mediator.Send(command);
+        //    return (result.Succeeded) ? Ok(result) : BadRequest(result);
+        //}
 
         /// <summary>
         /// Update Status Booking
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
-        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [Authorize]
         [HttpPatch("update-status")]
         public async Task<IActionResult> UpdateStatusBooking(UpdateStatusBookingCommand command)
         {
@@ -116,31 +118,42 @@ namespace WebApi.Controllers.V1.Booking
         /// </summary>
         /// <param name="idCustomer"></param>
         /// <returns></returns>
-        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
-        [HttpGet("customer/{idCustomer}")]
-        public async Task<IActionResult> GetCustomerBookingHistory(long idCustomer)
-        {
-            return Ok(await Mediator.Send(new GetCustomerBookingHistoryQuery
-            {
-                CustomerId = idCustomer
-            }));
-        }
+        //[Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        //[HttpGet("customer/{idCustomer}")]
+        //public async Task<IActionResult> GetCustomerBookingHistory(long idCustomer)
+        //{
+        //    return Ok(await Mediator.Send(new GetCustomerBookingHistoryQuery
+        //    {
+        //        CustomerId = idCustomer
+        //    }));
+        //}
 
         /// <summary>
         /// Get customer booking
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        [Authorize(Roles = RoleConstants.CustomerRole)]
+        [Authorize]
         [HttpGet("customer")]
         public async Task<IActionResult> GetCustomerBooking([FromQuery] GetCustomerBookingQuery query)
         {
-            return Ok(await Mediator.Send(new GetCustomerBookingQuery
+            var result = await Mediator.Send(new GetCustomerBookingQuery
             {
-                CustomerId = query.CustomerId,
-                KeyWord = query.KeyWord,
-                BookingStatus = query.BookingStatus
-            }));
+                Keyword = query.Keyword,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize,
+                IsExport = query.IsExport,
+                OrderBy = query.OrderBy,
+            });
+            return result.Succeeded? Ok(result): BadRequest(result);
+        }
+
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
+        [HttpPatch("update-usage-status")]
+        public async Task<IActionResult> UpdateUsageStatusBooking(UpdateUsageStatusCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return (result.Succeeded) ? Ok(result) : BadRequest(result);
         }
     }
 }

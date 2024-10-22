@@ -22,7 +22,7 @@ namespace WebApi.Controllers.V1.Employee
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [Authorize(Roles = RoleConstants.AdministratorRole)]
+        [Authorize(Roles = RoleConstants.AdminAndEmployeeRole)]
         [HttpGet("{id}")]
         public async Task<ActionResult<Result<GetEmployeeByIdResponse>>> GetEmployeeById(long id)
         {

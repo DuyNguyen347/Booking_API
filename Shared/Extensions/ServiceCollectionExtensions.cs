@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shared.Configurations;
+using Shared.Configurations.PaymentConfig;
 using Shared.Services;
 
 namespace Shared.Extensions
@@ -20,6 +21,8 @@ namespace Shared.Extensions
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IDateTimeService, SystemDateTimeService>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            //services.AddSingleton<VnPayConfig>();
+            services.Configure<VnPayConfig>(configuration.GetSection(nameof(VnPayConfig)));
         }
     }
 }

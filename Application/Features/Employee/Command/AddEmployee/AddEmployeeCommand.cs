@@ -27,6 +27,8 @@ namespace Application.Features.Employee.Command.AddEmployee
         public string Password { get; set; } = default!;
         public string Username { get; set; } = default!;
         public long WorkShiftId { get; set; }
+
+        public bool IsAdmin { get; set; }
     }
 
     internal class AddEmployeeCommandHandler : IRequestHandler<AddEmployeeCommand, Result<AddEmployeeCommand>>
@@ -78,7 +80,8 @@ namespace Application.Features.Employee.Command.AddEmployee
             await _unitOfWork.Commit(cancellationToken);
             request.Id = addEmployee.Id;
             var user = _mapper.Map<AppUser>(request);
-            bool result = await _accountService.AddAcount(user, request.Password, RoleConstants.EmployeeRole);
+            var role = request.IsAdmin ? RoleConstants.AdministratorRole : RoleConstants.EmployeeRole;  
+            bool result = await _accountService.AddAcount(user, request.Password, role);
             if (!result)
             {
                 return await Result<AddEmployeeCommand>.FailAsync(StaticVariable.ERROR_ADD_USER);

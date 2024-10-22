@@ -8,8 +8,16 @@ namespace Application.Features.Statistics.Queries.GetOverview
 {
     public class GetOverviewResponse
     {
-        public DateTime Date { get; set; }
-        public decimal Revenue { get; set; }
-        public long Reach { get; set; }
+        public decimal? CurrPrdTotalRevenue { get; set; }
+        public int CurrPrdTotalBookings { get; set; }
+        public int CurrPrdTotalTickets { get; set; }
+        public decimal? CurrPrdOccupancyRate { get; set; }
+        public int CurrPrdSchedules { get; set; }
+
+        public decimal? PrevPrdTotalRevenue {  set; get; }
+        public int PrevPrdTotalBookings { get; set; }
+        public int PrevPrdTotalTickets { get; set; }
+        public decimal? PrevPrdOccupancyRate { get; set; }
+        public int PrevPrdSchedules { get; set; }
     }
 }

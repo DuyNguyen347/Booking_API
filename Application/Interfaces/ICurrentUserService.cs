@@ -6,5 +6,6 @@
         string HostServerName { get; }
         string OriginRequest { get; }
         string RoleName { get; }
+        string IpAddress { get; }
     }
-}
+}   

@@ -7,6 +7,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Features\Booking\Queries\GetAll\GetAllCustomerBooking\**" />
+	  <Compile Remove="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\**" />
+	  <Compile Remove="Features\PaymentDestination\**" />
+	  <EmbeddedResource Remove="Features\Booking\Queries\GetAll\GetAllCustomerBooking\**" />
+	  <EmbeddedResource Remove="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\**" />
+	  <EmbeddedResource Remove="Features\PaymentDestination\**" />
+	  <None Remove="Features\Booking\Queries\GetAll\GetAllCustomerBooking\**" />
+	  <None Remove="Features\Booking\Queries\GetAll\GetAllEmployeeBooking\**" />
+	  <None Remove="Features\PaymentDestination\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Domain\Domain.csproj" />
 	</ItemGroup>
 	<ItemGroup>
@@ -16,16 +28,18 @@
 		<PackageReference Include="FluentValidation" Version="11.4.0" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.4.0" />
 		<PackageReference Include="GemBox.Spreadsheet" Version="49.0.1244" />
+		<PackageReference Include="Hangfire" Version="1.7.33" />
 		<PackageReference Include="iTextSharp.LGPLv2.Core" Version="3.3.2" />
 		<PackageReference Include="LazyCache" Version="2.4.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.2" />
 		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.2" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.13" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+		<PackageReference Include="QRCoder-ImageSharp" Version="0.9.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
 		<PackageReference Include="System.Text.Json" Version="7.0.1" />
 		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.2.25" />
-		<PackageReference Include="QRCoder" Version="1.4.1" />
 	</ItemGroup>
 </Project>

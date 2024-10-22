@@ -12,7 +12,7 @@
         {
             this.PageNumber = 1;
             this.PageSize = 10;
-            this.IsExport = true;
+            this.IsExport = false;
             this.OrderBy = "CreatedOn desc";
         }
 

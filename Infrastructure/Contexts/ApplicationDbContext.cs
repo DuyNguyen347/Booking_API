@@ -18,6 +18,21 @@ using Domain.Entities.WorkShift;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities.EnumMasterData;
+using Domain.Entities.Category;
+using Domain.Entities.CategoryFilm;
+using Domain.Entities.Cinema;
+using Domain.Entities.FilmImage;
+using Domain.Entities.Films;
+using Domain.Entities.Position;
+using Domain.Entities.Room;
+using Domain.Entities.Schedule;
+using Domain.Entities.Seat;
+using Domain.Entities.Trailer;
+using Domain.Entities.Ticket;
+using Domain.Entities.Merchant;
+using Domain.Entities.Review;
+using Domain.Entities.Poster;
+using Domain.Entities.CinemaImage;
 
 namespace Infrastructure.Contexts
 {
@@ -36,6 +51,16 @@ namespace Infrastructure.Contexts
         private DbSet<AppRole> AppRoles { get; set; } = default!;
         private DbSet<AppRoleClaim> AppRoleClaims { get; set; } = default!;
         public virtual DbSet<Booking> Bookings { get; set; }
+        public virtual DbSet<Category> Categories { get; set; }
+        public virtual DbSet<CategoryFilm> CategoryFilms { get; set; }
+        public virtual DbSet<Cinema> Cinemas { get; set; }
+        public virtual DbSet<FilmImage> FilmImages { get; set; }
+        public virtual DbSet<Film> Films { get; set; }
+        public virtual DbSet<Position> Positions { get; set; }
+        public virtual DbSet<Room> Room { get; set; }
+        public virtual DbSet<Schedule> Schedules { get; set; }
+        public virtual DbSet<Seat> Seats { get; set; }
+        public virtual DbSet<Trailer> Trailers { get; set; }
         public virtual DbSet<BookingDetail> BookingDetails { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
         public virtual DbSet<Employee> Employees { get; set; }
@@ -50,6 +75,11 @@ namespace Infrastructure.Contexts
         public virtual DbSet<ViewCustomerFeedbackReply> ViewCustomerFeedbackReplies { get; set; }
         public virtual DbSet<ViewCustomerReviewHistory> ViewCustomerReviewHistories { get; set; }
         public virtual DbSet<EnumMasterData> EnumMasterDatas { get; set; }
+        public virtual DbSet<Ticket> Tickets { get; set; }
+        public virtual DbSet<Merchant> Merchants { get; set; }
+        public virtual DbSet<Review> Reviews { get; set; }
+        public virtual DbSet<Poster> Posters { get; set; }
+        public virtual DbSet<CinemaImage> CinemaImages { get; set; }
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new())
         {
             foreach (var entry in ChangeTracker.Entries<IAuditableEntity>().ToList())

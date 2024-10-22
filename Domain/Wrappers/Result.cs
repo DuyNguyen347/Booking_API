@@ -1,4 +1,6 @@
-﻿namespace Domain.Wrappers
+﻿using Domain.Constants.Enum;
+
+namespace Domain.Wrappers
 {
     public class Result : IResult
     {
@@ -84,6 +86,16 @@
             return new Result<T> { Succeeded = false, Messages = messages };
         }
 
+        public new static Result<T> Fail(T data, string messages)
+        {
+            return new Result<T> { Succeeded = false, Data = data, Messages = new List<string> { messages } };
+        }
+
+        public new static Result<T> Fail(T data, List<string> messages)
+        {
+            return new Result<T> { Succeeded = false, Data = data, Messages = messages };
+        }
+
         public new static Task<Result<T>> FailAsync()
         {
             return Task.FromResult(Fail());
@@ -97,6 +109,15 @@
         public new static Task<Result<T>> FailAsync(List<string> messages)
         {
             return Task.FromResult(Fail(messages));
+        }
+
+        public new static Task<Result<T>> FailAsync(T data, string message)
+        {
+            return Task.FromResult(Fail(data, message));
+        }
+        public new static Task<Result<T>> FailAsync(T data, List<string> messages)
+        {
+            return Task.FromResult(Fail(data, messages));
         }
 
         public new static Result<T> Success()

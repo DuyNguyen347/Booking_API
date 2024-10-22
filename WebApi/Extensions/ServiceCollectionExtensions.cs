@@ -4,6 +4,7 @@ using Domain.Entities.Service;
 using Hangfire;
 using Infrastructure.Contexts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
+using Serilog.Events;
+using Serilog;
 using Shared.Configurations;
 using System.Net;
 using System.Security.Claims;
@@ -29,10 +32,10 @@ namespace WebApi.Extensions
                 {
                     Version = "v1",
                     Title = "Source.API.Core",
-                    Description = "API NinePlus Booking Spa",
+                    Description = "API Management Cinema",
                     Contact = new OpenApiContact
                     {
-                        Name = "Nine Plus Booking Spa",
+                        Name = "Management Cinama",
                     }
                 });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -113,7 +116,7 @@ namespace WebApi.Extensions
                 options.AddPolicy("CorsPolicy",
                     builder => builder
                         .SetIsOriginAllowedToAllowWildcardSubdomains()
-                        .WithOrigins("http://localhost:4200")
+                        .WithOrigins("*")
                         .AllowAnyMethod()
                         .DisallowCredentials()
                         .AllowAnyHeader()
@@ -196,6 +199,25 @@ namespace WebApi.Extensions
                     };
                 });
             return services;
+        }
+
+        public static IServiceCollection AddLogging(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddHttpLogging(logging =>
+            {
+                logging.LoggingFields = HttpLoggingFields.All;
+                logging.RequestHeaders.Add("sec-ch-ua");
+                logging.ResponseHeaders.Add("MyResponseHeader");
+                logging.MediaTypeOptions.AddText("application/javascript");
+                logging.RequestBodyLogLimit = 4096;
+                logging.ResponseBodyLogLimit = 4096;
+
+            });
+
+            return services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddSerilog(dispose: true);
+            });
         }
     }
 }
